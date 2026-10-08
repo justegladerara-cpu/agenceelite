@@ -1,0 +1,35 @@
+name: Express Congo checks
+on:
+  push:
+    paths: ['sites-clients/express-congo/**', '.github/workflows/express-congo.yml']
+  pull_request:
+    paths: ['sites-clients/express-congo/**', '.github/workflows/express-congo.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sites-clients/express-congo
+    env:
+      APP_ENV: demo
+      NEXT_TELEMETRY_DISABLED: '1'
+      PLAYWRIGHT_CHANNEL: chrome
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: sites-clients/express-congo/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: express-congo-verification
+          path: |
+            sites-clients/express-congo/playwright-report
+            sites-clients/express-congo/docs/screenshots
