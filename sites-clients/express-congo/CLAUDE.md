@@ -7,7 +7,8 @@ Lis d’abord HANDOFF.md, puis le cahier des charges v2 et TEST_REPORT.md. Ne su
 - src/app : pages SSR Next.js, API, erreurs, indexation.
 - src/components : interface publique, devis progressif, calculateur, gestion locale.
 - src/domain : volumes exacts, validation devis, tarification versionnée pure.
-- src/server : SQLite transactionnel, idempotence, limitation, sessions locales, opérations et permissions.
+- src/server : SQLite transactionnel, idempotence, limitation, sessions locales, opérations et permissions. backoffice.ts : demandes web et journal pour la gestion.
+- src/components/operations.tsx + backoffice/ : logiciel de gestion (tableau de bord, listes, fiches, rapports, graphiques).
 - src/content/public.json : propositions éditoriales et données observées.
 - assets : sources originales, PDF non validé, empreintes SHA-256.
 - public : médias servis, police Inter et licence OFL.

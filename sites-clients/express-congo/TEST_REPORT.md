@@ -57,3 +57,15 @@ Environnement : Linux, Node.js 22.22.0, Chrome installé, APP_ENV=demo, aucun co
 Écart corrigé : sans barre finale, /a-propos/, /services/, /contact/, /cgv/ et /mentions-legales/ redirigeaient, et /2025/07/30/comment-prendre-les-mesures/ faisait deux sauts. Le scénario de redirections teste désormais les URL exactes du sitemap WordPress, les deux PDF historiques et l’absence de redirection des pages conservées.
 
 Constat non corrigé : `npx prettier --check .` signale 262 fichiers déjà non formatés avant la reprise. Seuls les fichiers modifiés ont été formatés.
+
+## Refonte et logiciel de gestion — 8 octobre 2026
+
+| Commande                         | Résultat exécuté                                                                                             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| npm run check                    | Types, lint et 23 tests métier réussis                                                                       |
+| CI=1 npx playwright test         | 13 scénarios réussis, dont le nouveau « demandes web : traitement contrôlé côté serveur et tableau de bord » |
+| npm run demo:dataset             | 8 expéditions, 5 propositions, 4 demandes web créées via les API, toutes règles métier respectées            |
+| npm run capture:local            | Captures régénérées ; LCP laboratoire 912 ms, CLS 0,0007 (accueil mobile, réseau limité)                     |
+| Contrôle de débordement à 390 px | Aucune page publique ni écran de gestion plus large que l’écran                                              |
+
+Nouveau scénario : un client reçoit 403 en tentant de changer l’état d’une demande web, une transition interdite (nouveau → acceptée) renvoie 422, l’administrateur passe la demande en étude, puis l’interface affiche le tableau de bord et la fiche avec l’étape suivante proposée.

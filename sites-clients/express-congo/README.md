@@ -33,6 +33,24 @@ Le portail de démonstration est accessible à `/demo`. Comptes : `client-a@exam
 
 Les devis sont persistés atomiquement avec leurs pièces en quarantaine et une clé d’idempotence. Les pièces ne sont pas téléchargeables, faute d’analyse connectée. Aucun email, paiement ou suivi réel n’est simulé.
 
+## Logiciel de gestion (démonstration)
+
+`/demo` est conçu comme un logiciel de bureau : barre latérale par domaine (Ventes, Opérations, Support, Analyse), tableau de bord « À faire », demandes web du site, propositions, clients, expéditions, colis, départs, historique, assistance, rapports de chargement et journal d’activité (administrateur). Fiches détaillées avec chronologie, filtres, tri et export CSV des dossiers visibles. Toutes les permissions restent appliquées côté serveur.
+
+Pour remplir la démonstration avec un jeu fictif complet (8 expéditions, 5 propositions, 4 demandes web), serveur lancé :
+
+```bash
+npm run db:reset && npm run db:seed:demo   # serveur arrêté
+npm run start                               # dans un autre terminal
+npm run demo:dataset
+```
+
+Le script passe par les mêmes API que l’interface : chaque dossier respecte les transitions, mesures et permissions.
+
+## Applications installables
+
+Le site client (`/manifest.webmanifest`) et le logiciel de gestion (`/gestion.webmanifest`, ouverture sur `/demo/`) s’installent depuis Chrome ou Edge (« Installer l’application ») sur PC, et depuis le navigateur du téléphone. Aucun service worker : aucune page ni document privé n’est mis en cache hors ligne. En production, le manifeste de gestion devra pointer vers l’administration réelle une fois l’authentification raccordée (EC-025).
+
 ## Base PostgreSQL préparée
 
 Docker Compose est un outil de préparation distinct de l’adaptateur SQLite utilisé par l’application locale.

@@ -30,6 +30,14 @@ Le projet n’est **pas une plateforme de production terminée**. Le site public
 
 Vérification indépendante : check, build, garde-fou production et 12 scénarios navigateur rejoués avec succès. Corrigé : barre finale des URL (anciennes adresses WordPress conservées sans redirection, un seul saut pour l’article de mesures) ; horaires publiés et page Facebook ajoutés en OBSERVÉ, masqués en production. Formatage Prettier global non conforme (262 fichiers) déjà présent, non traité.
 
+## Refonte visuelle et logiciel de gestion (Claude, 8 octobre 2026)
+
+- Site public : nouveau système visuel, accueil avec tracé France → Congo et accès directs (devis, volume, agence), numéros formatés, étapes de devis lisibles.
+- Gestion `/demo` : tableau de bord (À faire, propositions par devise, expéditions par étape, activité 14 jours, prochains départs, dernières demandes web), modules Demandes web (traitement des états), Clients, Rapports (volume et poids par agence, chargement par départ, expéditions par étape), Journal d’activité (administrateur). Fiches latérales avec chronologie et actions préremplies ; filtres, tri, export CSV.
+- Applications installables : site client et logiciel de gestion (manifestes + icônes).
+- `npm run demo:dataset` remplit la démonstration via les vraies API.
+- Reste partiel : la gestion utilise toujours les comptes et le stockage de démonstration ; production bloquée jusqu’à EC-025. Pas de paiement, pas de notifications réelles.
+
 ## Dernières vérifications
 
 `npm run check` : types, lint et **23 tests métier/intégration locaux réussis**. `npm run test:e2e` : build optimisé de démonstration et **12 scénarios navigateur réussis**, dont réception → départ → remise, accès inter-clients/inter-agences, PDF, QR et manifeste. Voir TEST_REPORT.md pour les commandes, corrections et limites.
