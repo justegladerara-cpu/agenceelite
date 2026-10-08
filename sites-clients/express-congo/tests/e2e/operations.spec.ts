@@ -131,3 +131,102 @@ test("permissions API, réception jusqu’à remise, PDF, étiquette et portail 
     page.getByRole("button", { name: "Expéditions", exact: true }),
   ).toBeVisible();
 });
+test("demandes web : traitement contrôlé côté serveur et tableau de bord", async ({
+  page,
+  request,
+  playwright,
+}) => {
+  const origin = "http://127.0.0.1:3000";
+  const created = await request.post("/api/devis", {
+    headers: {
+      Origin: origin,
+      "Idempotency-Key": "e2e-backoffice-" + Date.now(),
+    },
+    multipart: {
+      payload: JSON.stringify({
+        kind: "particulier",
+        service: "aerien",
+        destination: "Brazzaville",
+        description: "Cartons fictifs pour test de gestion",
+        parcels: [
+          {
+            length: "60",
+            width: "40",
+            height: "40",
+            weight: "12",
+            quantity: "3",
+            unit: "cm",
+          },
+        ],
+        customs: "",
+        desiredDate: "",
+        agency: "paris",
+        city: "Ville fictive",
+        name: "Client Gestion Test",
+        email: "gestion@example.invalid",
+        phone: "+33000000000",
+        channel: "email",
+        comment: "",
+        frequency: "",
+        constraints: "",
+        privacy: true,
+        marketing: false,
+      }),
+    },
+  });
+  expect(created.status()).toBe(201);
+  async function as(email: string) {
+    const ctx = await playwright.request.newContext({ baseURL: origin });
+    const s = await (await ctx.get("/api/demo/session")).json();
+    expect(
+      (
+        await ctx.post("/api/demo/session", {
+          headers: { Origin: origin },
+          data: { email, password: "DemoExpress!2026", code: s.secondStep },
+        })
+      ).status(),
+    ).toBe(200);
+    return ctx;
+  }
+  const admin = await as("admin@example.invalid");
+  const html = await (await admin.get("/demo/")).text();
+  expect(html).toContain("Client Gestion Test");
+  // L’identifiant est lu depuis la page rendue pour l’administrateur.
+  const { reference } = await created.json();
+  const id = new RegExp(
+    `"id":"([0-9a-f-]{36})","reference":"${reference}"`,
+  ).exec(html.replace(/\\"/g, '"'))?.[1];
+  expect(id).toBeTruthy();
+  const post = (ctx: typeof admin, status: string) =>
+    ctx.post("/api/demo/operations", {
+      headers: { Origin: origin },
+      data: { command: "quoteStatus", quoteId: id, status },
+    });
+  const client = await as("client-a@example.invalid");
+  expect((await post(client, "en-etude")).status()).toBe(403);
+  expect((await post(admin, "acceptee")).status()).toBe(422);
+  expect((await post(admin, "en-etude")).status()).toBe(201);
+
+  await page.goto("/demo/");
+  const s = await (await page.request.get("/api/demo/session")).json();
+  await page
+    .getByLabel("Compte", { exact: true })
+    .selectOption("admin@example.invalid");
+  await page
+    .getByLabel("Mot de passe", { exact: true })
+    .fill("DemoExpress!2026");
+  await page.getByLabel("Code administrateur (simulation)").fill(s.secondStep);
+  await page
+    .getByRole("button", { name: "Se connecter à la démonstration" })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Tableau de bord" }),
+  ).toBeVisible();
+  await expect(page.getByText("Expéditions par étape")).toBeVisible();
+  await page.getByRole("button", { name: "Demandes web", exact: true }).click();
+  await page.getByRole("row", { name: /Client Gestion Test/ }).click();
+  await expect(page.getByRole("dialog")).toContainText("En étude");
+  await expect(
+    page.getByRole("button", { name: "Passer à « Proposition envoyée »" }),
+  ).toBeVisible();
+});

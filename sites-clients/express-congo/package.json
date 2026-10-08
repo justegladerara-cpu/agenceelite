@@ -22,7 +22,8 @@
     "db:backup": "node scripts/db.mjs backup",
     "db:restore": "node scripts/db.mjs restore",
     "assets:fetch": "node scripts/assets.mjs",
-    "capture:local": "node scripts/capture.mjs"
+    "capture:local": "node scripts/capture.mjs",
+    "demo:dataset": "node scripts/demo-dataset.mjs"
   },
   "dependencies": {
     "next": "16.4.0",

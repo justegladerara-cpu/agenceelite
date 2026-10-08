@@ -6,6 +6,7 @@ import {
   listEntities,
   operation,
 } from "@/server/operations-repository";
+import { setQuoteStatus } from "@/server/backoffice";
 export async function GET(request: Request) {
   const actor = await currentActor();
   if (!actor) return new Response(null, { status: 401 });
@@ -27,9 +28,12 @@ export async function POST(request: Request) {
     return new Response(null, { status: 413 });
   const input = await request.json().catch(() => ({}));
   try {
-    return NextResponse.json(operation(actor, String(input.command), input), {
-      status: 201,
-    });
+    // Les demandes du site vivent dans leur propre table et transaction.
+    const result =
+      input.command === "quoteStatus"
+        ? setQuoteStatus(actor, input.quoteId, input.status, input.reason)
+        : operation(actor, String(input.command), input);
+    return NextResponse.json(result, { status: 201 });
   } catch (e) {
     const message = (e as Error).message;
     return NextResponse.json(
