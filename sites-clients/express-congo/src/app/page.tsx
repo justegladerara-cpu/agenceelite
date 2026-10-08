@@ -1,6 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
-import { ServiceCards, AgencyCards, FAQ } from "@/components/public";
+import { ServiceCards, AgencyCards, FAQ, RouteMap } from "@/components/public";
 import { CTA } from "@/components/shell";
 export const metadata = { alternates: { canonical: "/" } };
 export default function Home() {
@@ -9,94 +8,56 @@ export default function Home() {
       <section className="hero">
         <div className="container hero-grid">
           <div className="hero-copy">
-            <span className="eyebrow">Fret · France → République du Congo</span>
-            <h1>
-              Vos envois.
-              <br />
-              <span>
-                Un lien avec
-                <br />
-                le Congo.
-              </span>
-            </h1>
+            <span className="eyebrow">Fret aérien, maritime et conteneurs</span>
+            <h1>Vos envois de la France vers le Congo</h1>
             <p>
-              Fret aérien, maritime et conteneurs complets. Décrivez votre envoi
-              pour préparer votre expédition avec notre équipe.
+              Décrivez ce que vous envoyez. Notre équipe étudie votre demande et
+              vous propose une solution adaptée, avec ses conditions précisées
+              avant le départ.
             </p>
             <div className="actions">
               <Link className="button" href="/devis">
-                Demander un devis <span aria-hidden>↗</span>
+                Demander un devis
               </Link>
-              <Link className="plain-link" href="/agences">
-                Trouver une agence →
+              <Link className="plain-link" href="/services">
+                Voir nos solutions
               </Link>
-            </div>
-            <div className="hero-note">
-              <span>Paris</span>
-              <i aria-hidden>⟶</i>
-              <span>Brazzaville & Pointe-Noire</span>
             </div>
           </div>
-          <div className="hero-visual">
-            <div className="visual-head">
-              <span>EXPRESS CONGO</span>
-              <span>FR → CG</span>
-            </div>
-            <Image
-              src="/assets/m_1_banniere.png"
-              width={720}
-              height={300}
-              alt="Visuel maritime du site Express Congo"
-              priority
-            />
-            <div className="visual-route">
-              <div className="route-line" aria-hidden>
-                <span />
-                <i />
-                <span />
-              </div>
-              <div className="two-col">
-                <p>
-                  <small>AU DÉPART</small>
-                  <strong>France</strong>
-                </p>
-                <p>
-                  <small>À DESTINATION</small>
-                  <strong>République du Congo</strong>
-                </p>
-              </div>
-            </div>
-            <div className="visual-caption">
-              Une proposition adaptée à votre envoi.
-              <br />
-              Des conditions précisées avant de partir.
-            </div>
-          </div>
+          <RouteMap />
         </div>
       </section>
+      <nav className="container quick" aria-label="Accès directs">
+        <div className="quick-grid">
+          <Link className="quick-main" href="/devis">
+            <strong>Demander un devis</strong>
+            <span>En 5 étapes, sans créer de compte.</span>
+          </Link>
+          <Link href="/prendre-les-mesures">
+            <strong>Calculer mon volume</strong>
+            <span>Dimensions de vos cartons et palettes.</span>
+          </Link>
+          <Link href="/agences">
+            <strong>Trouver une agence</strong>
+            <span>Paris, Brazzaville et Pointe-Noire.</span>
+          </Link>
+        </div>
+      </nav>
       <section className="container section">
         <div className="section-heading split">
           <div>
-            <span className="eyebrow">Choisir la bonne solution</span>
-            <h2>
-              À chaque envoi,
-              <br />
-              une solution à étudier.
-            </h2>
+            <span className="eyebrow">Nos solutions</span>
+            <h2>Un mode de transport pour chaque envoi</h2>
           </div>
-          <Link href="/services">Comparer les services →</Link>
+          <Link href="/services">Comparer les solutions</Link>
         </div>
         <ServiceCards />
       </section>
       <section className="steps-section">
         <div className="container section">
           <div className="section-heading">
-            <span className="eyebrow">Un parcours clair</span>
-            <h2>Préparer. Valider. Expédier.</h2>
-            <p>
-              Quatre étapes proposées pour accompagner votre envoi, selon les
-              modalités confirmées.
-            </p>
+            <span className="eyebrow">Comment ça se passe</span>
+            <h2>Quatre étapes, de la demande au retrait</h2>
           </div>
           <div className="four-col steps">
             {[
@@ -107,22 +68,22 @@ export default function Home() {
               ],
               [
                 "Validez la proposition",
-                "Prix, prestations et conditions à examiner.",
+                "Prix, prestations et conditions détaillés.",
                 "/tarifs",
               ],
               [
-                "Préparez le dépôt",
-                "Après confirmation des instructions de l’agence.",
+                "Déposez vos colis",
+                "Selon les instructions de votre agence.",
                 "/preparer-mon-envoi",
               ],
               [
-                "Consultez les informations",
-                "Les événements disponibles, sans suivi GPS simulé.",
+                "Suivez l’acheminement",
+                "Les étapes enregistrées par nos agences.",
                 "/suivi",
               ],
             ].map(([title, text, href], i) => (
               <Link href={href} key={title}>
-                <span>0{i + 1}</span>
+                <span>{i + 1}</span>
                 <h3>{title}</h3>
                 <p>{text}</p>
               </Link>
@@ -132,32 +93,27 @@ export default function Home() {
       </section>
       <section className="container section preparation">
         <div>
-          <span className="eyebrow">Avant de nous confier vos colis</span>
-          <h2>
-            Un envoi bien mesuré,
-            <br />
-            une demande plus précise.
-          </h2>
+          <span className="eyebrow">Avant de déposer vos colis</span>
+          <h2>Un envoi bien mesuré, une proposition plus juste</h2>
           <p>
-            Longueur, largeur, hauteur : relevez les dimensions extérieures.
-            Notre calculateur vous aide à préparer le volume de vos cartons.
+            Relevez la longueur, la largeur et la hauteur de chaque colis
+            emballé. Le calculateur additionne le volume de vos cartons pour
+            préparer votre demande.
           </p>
           <Link className="button secondary" href="/prendre-les-mesures">
-            Mesurer mes colis →
+            Mesurer mes colis
           </Link>
         </div>
         <div className="guide-links">
           {[
-            ["01", "Mesurer et calculer", "/prendre-les-mesures"],
+            ["Mesurer et calculer le volume", "/prendre-les-mesures"],
+            ["Emballer et préparer les documents", "/emballage-et-documents"],
             [
-              "02",
-              "Emballer et préparer les documents",
-              "/emballage-et-documents",
+              "Vérifier les marchandises acceptées",
+              "/marchandises-reglementees",
             ],
-            ["03", "Vérifier les marchandises", "/marchandises-reglementees"],
-          ].map(([n, title, href]) => (
-            <Link key={n} href={href}>
-              <span>{n}</span>
+          ].map(([title, href]) => (
+            <Link key={href} href={href}>
               {title}
               <b aria-hidden>↗</b>
             </Link>
@@ -168,23 +124,19 @@ export default function Home() {
         <div className="container section">
           <div className="section-heading split">
             <div>
-              <span className="eyebrow">Des points de contact</span>
-              <h2>Votre agence, des deux côtés.</h2>
+              <span className="eyebrow">Nos agences</span>
+              <h2>Une équipe en France et au Congo</h2>
             </div>
-            <Link href="/agences">Toutes les agences →</Link>
+            <Link href="/agences">Toutes les agences</Link>
           </div>
           <AgencyCards />
         </div>
       </section>
       <section className="container section faq-section">
         <div>
-          <span className="eyebrow">Pour commencer</span>
-          <h2>
-            Vos questions,
-            <br />
-            en toute clarté.
-          </h2>
-          <Link href="/faq">Toutes les réponses →</Link>
+          <span className="eyebrow">Questions fréquentes</span>
+          <h2>Ce qu’il faut savoir avant d’envoyer</h2>
+          <Link href="/faq">Toutes les réponses</Link>
         </div>
         <FAQ />
       </section>

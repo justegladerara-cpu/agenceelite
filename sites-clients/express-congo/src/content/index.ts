@@ -19,3 +19,11 @@ export const publicPaths = [
 export function observed(value: string) {
   return production() ? "" : `[À CONFIRMER : ${value}]`;
 }
+/** Affichage lisible ; le lien tel: garde le format international. */
+export function formatPhone(e164: string) {
+  const fr = /^\+33(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(e164);
+  if (fr) return `+33 ${fr.slice(1).join(" ")}`;
+  const cg = /^\+242(\d{2})(\d{3})(\d{2})(\d{2})$/.exec(e164);
+  if (cg) return `+242 ${cg.slice(1).join(" ")}`;
+  return e164;
+}

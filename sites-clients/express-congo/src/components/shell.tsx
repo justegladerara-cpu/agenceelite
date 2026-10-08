@@ -33,7 +33,7 @@ export function Header() {
           </nav>
           <div className="header-actions">
             <Link className="client-link" href="/espace-client">
-              Espace client ↗
+              Espace client
             </Link>
             <Link className="button small" href="/devis">
               Demander un devis

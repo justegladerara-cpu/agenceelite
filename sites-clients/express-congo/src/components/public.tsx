@@ -5,11 +5,10 @@ import { production } from "@/config";
 export function ServiceCards() {
   return (
     <div className="three-col">
-      {content.services.map((s, i) => (
+      {content.services.map((s) => (
         <article className="card service-card" key={s.slug}>
           <div className="service-top">
-            <Image src={"/assets/" + s.icon} width={40} height={40} alt="" />
-            <span>0{i + 1}</span>
+            <Image src={"/assets/" + s.icon} width={44} height={44} alt="" />
           </div>
           <h3>{s.name}</h3>
           <p>{s.intro}</p>
@@ -157,5 +156,110 @@ export function MeasureDiagram({ type = "carton" }: { type?: string }) {
         largeur, H : hauteur.
       </figcaption>
     </figure>
+  );
+}
+
+/* Tracé schématique : positions calculées à partir des longitudes et
+   latitudes réelles des trois agences (x = 80 + lon × 20, y = 40 + (52 − lat) × 7,4). */
+export function RouteMap() {
+  const dots: { x: number; y: number }[] = [];
+  for (let x = 20; x <= 540; x += 26)
+    for (let y = 20; y <= 500; y += 26) dots.push({ x, y });
+  return (
+    <svg
+      className="hero-map"
+      viewBox="0 0 560 520"
+      role="img"
+      aria-labelledby="route-map-title"
+    >
+      <title id="route-map-title">
+        Schéma de liaison entre l’agence de Paris et les agences de Brazzaville
+        et Pointe-Noire, en République du Congo
+      </title>
+      <g fill="#3a5a96">
+        {dots.map((d) => (
+          <circle key={d.x + "-" + d.y} cx={d.x} cy={d.y} r="1.4" />
+        ))}
+      </g>
+      <line
+        x1="0"
+        x2="560"
+        y1="425"
+        y2="425"
+        stroke="#4a68a3"
+        strokeDasharray="2 6"
+      />
+      <text x="548" y="416" textAnchor="end" fill="#6f86b5" fontSize="12">
+        Équateur
+      </text>
+      <path
+        className="route"
+        d="M127 63 C 60 230, 250 330, 386 456"
+        fill="none"
+        stroke="#ff4b53"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        className="route"
+        d="M386 456 C 360 476, 335 474, 317 460"
+        fill="none"
+        stroke="#ff4b53"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      {[
+        {
+          x: 127,
+          y: 63,
+          name: "Paris",
+          note: "France",
+          anchor: "start",
+          dx: 18,
+        },
+        {
+          x: 386,
+          y: 456,
+          name: "Brazzaville",
+          note: "République du Congo",
+          anchor: "start",
+          dx: 18,
+        },
+        {
+          x: 317,
+          y: 460,
+          name: "Pointe-Noire",
+          note: "République du Congo",
+          anchor: "end",
+          dx: -18,
+        },
+      ].map((c) => (
+        <g key={c.name}>
+          <circle cx={c.x} cy={c.y} r="14" fill="#ff4b53" opacity="0.18" />
+          <circle cx={c.x} cy={c.y} r="6" fill="#ffffff" />
+          <text
+            x={c.x + c.dx}
+            y={c.y - 2}
+            textAnchor={c.anchor as "start" | "end"}
+            fill="#ffffff"
+            fontSize="19"
+            fontWeight="650"
+            fontFamily="Archivo, Arial, sans-serif"
+            style={{ fontStretch: "112%" }}
+          >
+            {c.name}
+          </text>
+          <text
+            x={c.x + c.dx}
+            y={c.y + 17}
+            textAnchor={c.anchor as "start" | "end"}
+            fill="#9fb8e6"
+            fontSize="13"
+          >
+            {c.note}
+          </text>
+        </g>
+      ))}
+    </svg>
   );
 }

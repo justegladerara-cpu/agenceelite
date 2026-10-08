@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Image from "next/image";
-import { content, observed, publicPaths } from "@/content";
+import { content, observed, publicPaths, formatPhone } from "@/content";
 import { Calculator } from "@/components/calculator";
 import { QuoteForm } from "@/components/quote-form";
 import {
@@ -293,7 +293,7 @@ export default async function Page({
                   <h3>Téléphones observés, à confirmer</h3>
                   {agency.phones.map((p) => (
                     <p key={p}>
-                      <Link href={"tel:" + p}>{p}</Link>
+                      <Link href={"tel:" + p}>{formatPhone(p)}</Link>
                     </p>
                   ))}
                   <h3>Horaires observés, à confirmer</h3>
