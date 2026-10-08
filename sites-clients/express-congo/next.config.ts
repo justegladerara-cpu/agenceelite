@@ -1,22 +1,24 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
   poweredByHeader: false,
+  // Conserve les URL de l’ancien site WordPress (/a-propos/, /services/…) sans redirection.
+  trailingSlash: true,
   serverExternalPackages: ["node:sqlite"],
   async redirects() {
     return [
       {
         source: "/2025/07/30/comment-prendre-les-mesures",
-        destination: "/prendre-les-mesures",
+        destination: "/prendre-les-mesures/",
         statusCode: 301,
       },
       {
         source: "/wp-content/uploads/2025/08/grille-tarifaire.pdf",
-        destination: "/tarifs",
+        destination: "/tarifs/",
         statusCode: 301,
       },
       {
         source: "/wp-content/uploads/2026/09/grille-tarifaire.pdf",
-        destination: "/tarifs",
+        destination: "/tarifs/",
         statusCode: 301,
       },
     ];

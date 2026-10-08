@@ -4,6 +4,6 @@ export default function sitemap() {
   return production()
     ? publicPaths
         .filter((p) => p !== "/suivi")
-        .map((p) => ({ url: siteUrl() + p }))
+        .map((p) => ({ url: siteUrl() + (p === "/" ? p : p + "/") }))
     : [];
 }

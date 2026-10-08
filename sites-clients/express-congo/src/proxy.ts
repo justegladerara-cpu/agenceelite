@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
-  const path = request.nextUrl.pathname;
+  const path = request.nextUrl.pathname.replace(/(.)\/$/, "$1");
   if (
     path === "/2025/08/02/bonjour-tout-le-monde" ||
     /^\/(author|category|tag)(\/|$)/.test(path)

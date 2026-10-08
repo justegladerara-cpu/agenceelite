@@ -48,7 +48,7 @@ export async function generateMetadata({
     description:
       content.pages.find((p) => p.slug === path)?.description ||
       `Préparer votre envoi avec Express Congo : ${titleFor(path).toLowerCase()}.`,
-    alternates: { canonical: "/" + path },
+    alternates: { canonical: "/" + path + "/" },
     robots:
       path === "suivi" || path === "espace-client"
         ? { index: false, follow: false }
@@ -296,9 +296,13 @@ export default async function Page({
                       <Link href={"tel:" + p}>{p}</Link>
                     </p>
                   ))}
+                  <h3>Horaires observés, à confirmer</h3>
                   <p>
                     {observed(
-                      "horaires de cette agence — fuseau " + agency.timezone,
+                      "horaires publiés " +
+                        agency.hoursObserved +
+                        " — fuseau " +
+                        agency.timezone,
                     )}
                   </p>
                   <Link
@@ -352,6 +356,13 @@ export default async function Page({
                     Ouvrir WhatsApp Paris (numéro à vérifier) ↗
                   </Link>
                 </p>
+                {content.socialObserved.map((s) => (
+                  <p key={s.url}>
+                    <Link href={s.url} target="_blank" rel="noreferrer">
+                      {s.network} (page observée, à confirmer) ↗
+                    </Link>
+                  </p>
+                ))}
                 <p id="appeler">
                   <Link href="/agences">Choisir l’agence à appeler →</Link>
                 </p>

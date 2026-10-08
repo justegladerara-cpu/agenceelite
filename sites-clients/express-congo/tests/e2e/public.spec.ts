@@ -77,15 +77,33 @@ test("permissions, fonctionnalités désactivées et noindex", async ({
   expect((await request.get("/robots.txt")).status()).toBe(200);
 });
 test("redirections historiques et contenus retirés", async ({ request }) => {
-  const r = await request.get("/2025/07/30/comment-prendre-les-mesures", {
+  // URL exactes du sitemap WordPress (avec barre finale) : un seul saut.
+  const r = await request.get("/2025/07/30/comment-prendre-les-mesures/", {
     maxRedirects: 0,
   });
   expect(r.status()).toBe(301);
-  expect(r.headers().location).toContain("/prendre-les-mesures");
+  expect(r.headers().location).toBe("/prendre-les-mesures/");
+  for (const pdf of [
+    "/wp-content/uploads/2025/08/grille-tarifaire.pdf",
+    "/wp-content/uploads/2026/09/grille-tarifaire.pdf",
+  ]) {
+    const p = await request.get(pdf, { maxRedirects: 0 });
+    expect(p.status()).toBe(301);
+    expect(p.headers().location).toBe("/tarifs/");
+  }
+  // Pages conservées à l'identique : aucune redirection.
+  for (const page of [
+    "/a-propos/",
+    "/services/",
+    "/contact/",
+    "/cgv/",
+    "/mentions-legales/",
+  ])
+    expect((await request.get(page, { maxRedirects: 0 })).status()).toBe(200);
   expect(
-    (await request.get("/2025/08/02/bonjour-tout-le-monde")).status(),
+    (await request.get("/2025/08/02/bonjour-tout-le-monde/")).status(),
   ).toBe(410);
-  expect((await request.get("/author/test")).status()).toBe(410);
+  expect((await request.get("/author/test/")).status()).toBe(410);
 });
 test("gestion éditoriale authentifiée et sauvegarde persistée", async ({
   page,
