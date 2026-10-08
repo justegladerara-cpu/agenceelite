@@ -26,6 +26,10 @@ Le projet n’est **pas une plateforme de production terminée**. Le site public
 | 3     | Notifications, paiements, rendez-vous, import CSV        | Non commencés. Seulement modèle PostgreSQL et variables prévus ; ne pas annoncer des adaptateurs terminés                                                                                                                                  |
 | Cible | PostgreSQL/Supabase/Netlify                              | Schéma préparatoire et documentation ; aucune connexion ni migration PostgreSQL exécutée faute de Docker, aucun déploiement                                                                                                                |
 
+## Reprise par Claude (8 octobre 2026)
+
+Vérification indépendante : check, build, garde-fou production et 12 scénarios navigateur rejoués avec succès. Corrigé : barre finale des URL (anciennes adresses WordPress conservées sans redirection, un seul saut pour l’article de mesures) ; horaires publiés et page Facebook ajoutés en OBSERVÉ, masqués en production. Formatage Prettier global non conforme (262 fichiers) déjà présent, non traité.
+
 ## Dernières vérifications
 
 `npm run check` : types, lint et **23 tests métier/intégration locaux réussis**. `npm run test:e2e` : build optimisé de démonstration et **12 scénarios navigateur réussis**, dont réception → départ → remise, accès inter-clients/inter-agences, PDF, QR et manifeste. Voir TEST_REPORT.md pour les commandes, corrections et limites.

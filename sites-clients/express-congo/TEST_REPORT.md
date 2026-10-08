@@ -41,3 +41,19 @@ Incompatibilité initiale TypeScript 7/linter ; réorganisation des dépendances
 - CI GitHub : configuration préparée ; réussite distante non présumée à partir des tests locaux.
 
 Les refus d’ouverture de production sont volontaires. Le rapport ne transforme pas les modules partiels de HANDOFF.md en modules terminés.
+
+## Reprise Claude — 8 octobre 2026
+
+Environnement : Linux, Node.js 22.22.0, Chrome installé, APP_ENV=demo, aucun compte externe.
+
+| Commande                                              | Résultat exécuté                                               |
+| ----------------------------------------------------- | -------------------------------------------------------------- |
+| npm ci puis npm run check                             | Types, lint et 23 tests métier réussis                         |
+| npm run build                                         | Build de démonstration réussi                                  |
+| APP_ENV=production node scripts/publication-check.mjs | Échec attendu (EC-026), garde-fou confirmé                     |
+| CI=1 npx playwright test                              | 12 scénarios réussis après correction des URL                  |
+| Parcours HTTP de toutes les routes et liens internes  | 26 URL internes en 200, aucune redirection interne, aucune 404 |
+
+Écart corrigé : sans barre finale, /a-propos/, /services/, /contact/, /cgv/ et /mentions-legales/ redirigeaient, et /2025/07/30/comment-prendre-les-mesures/ faisait deux sauts. Le scénario de redirections teste désormais les URL exactes du sitemap WordPress, les deux PDF historiques et l’absence de redirection des pages conservées.
+
+Constat non corrigé : `npx prettier --check .` signale 262 fichiers déjà non formatés avant la reprise. Seuls les fichiers modifiés ont été formatés.
