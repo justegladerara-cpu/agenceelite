@@ -24,7 +24,23 @@ const config: NextConfig = {
     ];
   },
   async headers() {
+    // Remplace l’ancien proxy Node (non pris en charge par Cloudflare) :
+    // tout est non indexable hors production, les zones privées toujours.
+    const noindex = { key: "X-Robots-Tag", value: "noindex, nofollow" };
+    const privateZones = [
+      "/admin",
+      "/espace-client",
+      "/suivi",
+      "/api",
+      "/demo",
+    ];
     return [
+      ...(process.env.APP_ENV === "production"
+        ? privateZones.map((p) => ({
+            source: p + "/:path*",
+            headers: [noindex],
+          }))
+        : [{ source: "/:path*", headers: [noindex] }]),
       {
         source: "/:path*",
         headers: [

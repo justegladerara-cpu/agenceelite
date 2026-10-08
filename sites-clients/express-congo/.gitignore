@@ -9,3 +9,7 @@ next-env.d.ts
 *.db-shm
 *.db-wal
 .pnpm_modules/
+.open-next/
+.wrangler/
+.dev.vars
+cloudflare-env.d.ts

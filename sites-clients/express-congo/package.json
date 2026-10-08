@@ -23,10 +23,14 @@
     "db:restore": "node scripts/db.mjs restore",
     "assets:fetch": "node scripts/assets.mjs",
     "capture:local": "node scripts/capture.mjs",
-    "demo:dataset": "node scripts/demo-dataset.mjs"
+    "demo:dataset": "node scripts/demo-dataset.mjs",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
-    "next": "16.4.0",
+    "@opennextjs/cloudflare": "1.20.9",
+    "next": "16.3.8",
     "qrcode": "1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0"
@@ -38,10 +42,11 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.4.0",
+    "eslint-config-next": "16.3.8",
     "prettier": "3.9.9",
     "typescript": "6.0.3",
-    "vitest": "5.0.3"
+    "vitest": "5.0.3",
+    "wrangler": "4.148.0"
   },
   "type": "module"
 }

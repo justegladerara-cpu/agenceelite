@@ -4,7 +4,7 @@ test("permissions API, réception jusqu’à remise, PDF, étiquette et portail 
   page,
 }) => {
   test.setTimeout(60000);
-  const origin = "http://127.0.0.1:3000";
+  const origin = process.env.BASE_URL || "http://127.0.0.1:3000";
   async function login(context: APIRequestContext, email: string) {
     const session = await (await context.get("/api/demo/session")).json();
     const r = await context.post("/api/demo/session", {
@@ -136,7 +136,7 @@ test("demandes web : traitement contrôlé côté serveur et tableau de bord", a
   request,
   playwright,
 }) => {
-  const origin = "http://127.0.0.1:3000";
+  const origin = process.env.BASE_URL || "http://127.0.0.1:3000";
   const created = await request.post("/api/devis", {
     headers: {
       Origin: origin,
