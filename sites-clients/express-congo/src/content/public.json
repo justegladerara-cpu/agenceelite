@@ -12,7 +12,8 @@
       "timezone": "Europe/Paris",
       "status": "OBSERVÉ",
       "validatedBy": null,
-      "validatedAt": null
+      "validatedAt": null,
+      "hoursObserved": "du lundi au vendredi de 9 h à 17 h et le samedi de 9 h à 17 h, sans interruption (affichés pour l’ensemble du réseau sur le site actuel, non confirmés par agence)"
     },
     {
       "slug": "brazzaville",
@@ -23,7 +24,8 @@
       "timezone": "Africa/Brazzaville",
       "status": "OBSERVÉ",
       "validatedBy": null,
-      "validatedAt": null
+      "validatedAt": null,
+      "hoursObserved": "du lundi au vendredi de 9 h à 17 h et le samedi de 9 h à 17 h, sans interruption (affichés pour l’ensemble du réseau sur le site actuel, non confirmés par agence)"
     },
     {
       "slug": "pointe-noire",
@@ -34,7 +36,8 @@
       "timezone": "Africa/Brazzaville",
       "status": "OBSERVÉ",
       "validatedBy": null,
-      "validatedAt": null
+      "validatedAt": null,
+      "hoursObserved": "du lundi au vendredi de 9 h à 17 h et le samedi de 9 h à 17 h, sans interruption (affichés pour l’ensemble du réseau sur le site actuel, non confirmés par agence)"
     }
   ],
   "services": [
@@ -233,6 +236,13 @@
           "Une vérification complète reste nécessaire. Cette page n’est pas une déclaration de conformité. Les tests réellement exécutés sont consignés dans TEST_REPORT.md."
         ]
       ]
+    }
+  ],
+  "socialObserved": [
+    {
+      "network": "Facebook",
+      "url": "https://www.facebook.com/ExpressCG/",
+      "status": "OBSERVÉ"
     }
   ]
 }
