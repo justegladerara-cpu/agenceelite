@@ -8,8 +8,8 @@ export async function GET() {
     return NextResponse.json({ message: "Accès refusé." }, { status: 401 });
   return NextResponse.json(
     {
-      quotes: localQuotes.list(),
-      contents: db().prepare("SELECT * FROM editorial").all(),
+      quotes: await localQuotes.list(),
+      contents: await (await db()).all("SELECT * FROM editorial"),
     },
     { headers: { "Cache-Control": "no-store" } },
   );
@@ -26,23 +26,22 @@ export async function POST(request: Request) {
     input.body.length > 10000
   )
     return NextResponse.json({ message: "Contenu invalide." }, { status: 422 });
-  const database = db(),
-    date = new Date().toISOString();
-  database.exec("BEGIN IMMEDIATE");
+  const date = new Date().toISOString();
   try {
-    database
-      .prepare(
+    // Contenu et journal enregistrés d’un seul bloc.
+    await (
+      await db()
+    ).batch([
+      [
         "INSERT INTO editorial(slug,title,body,updated_at) VALUES(?,?,?,?) ON CONFLICT(slug) DO UPDATE SET title=excluded.title,body=excluded.body,truth_status='PROPOSÉ',version=version+1,updated_at=excluded.updated_at",
-      )
-      .run(input.slug, input.title, input.body, date);
-    database
-      .prepare(
+        [input.slug, input.title, input.body, date],
+      ],
+      [
         "INSERT INTO audit(actor,action,object_id,detail,created_at) VALUES(?,?,?,?,?)",
-      )
-      .run("demo-editor", "content.saved", input.slug, "{}", date);
-    database.exec("COMMIT");
+        ["demo-editor", "content.saved", input.slug, "{}", date],
+      ],
+    ]);
   } catch {
-    database.exec("ROLLBACK");
     return NextResponse.json(
       { message: "Enregistrement impossible." },
       { status: 500 },

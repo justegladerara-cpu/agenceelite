@@ -13,7 +13,9 @@ export async function GET(request: Request) {
   try {
     const id = new URL(request.url).searchParams.get("id");
     return NextResponse.json(
-      id ? getEntity(actor, id) : { actor, entities: listEntities(actor) },
+      id
+        ? await getEntity(actor, id)
+        : { actor, entities: await listEntities(actor) },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch {
@@ -31,8 +33,8 @@ export async function POST(request: Request) {
     // Les demandes du site vivent dans leur propre table et transaction.
     const result =
       input.command === "quoteStatus"
-        ? setQuoteStatus(actor, input.quoteId, input.status, input.reason)
-        : operation(actor, String(input.command), input);
+        ? await setQuoteStatus(actor, input.quoteId, input.status, input.reason)
+        : await operation(actor, String(input.command), input);
     return NextResponse.json(result, { status: 201 });
   } catch (e) {
     const message = (e as Error).message;

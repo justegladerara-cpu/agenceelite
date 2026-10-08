@@ -22,12 +22,14 @@ export interface QuoteRepository {
     input: QuoteInput,
     key: string,
     uploads?: Upload[],
-  ): { reference: string; created: boolean };
-  list(): QuoteRecord[];
+  ): Promise<{ reference: string; created: boolean }>;
+  list(): Promise<QuoteRecord[]>;
 }
+const AUDIT =
+  "INSERT INTO audit(actor,action,object_id,detail,created_at) VALUES(?,?,?,?,?)";
 export const localQuotes: QuoteRepository = {
-  create(input, key, uploads = []) {
-    const database = db();
+  async create(input, key, uploads = []) {
+    const database = await db();
     const fingerprint = createHash("sha256")
       .update(JSON.stringify(input))
       .update(
@@ -40,94 +42,90 @@ export const localQuotes: QuoteRepository = {
         ),
       )
       .digest("hex");
-    database.exec("BEGIN IMMEDIATE");
+    const replay = async () => {
+      const existing = await database.get<{
+        reference: string;
+        fingerprint: string;
+      }>("SELECT reference,fingerprint FROM quotes WHERE idempotency=?", key);
+      if (!existing) return undefined;
+      if (existing.fingerprint !== fingerprint)
+        throw new Error("IDEMPOTENCY_CONFLICT");
+      return { reference: existing.reference, created: false };
+    };
+    const already = await replay();
+    if (already) return already;
+    const id = randomUUID(),
+      reference = "EC-" + randomBytes(10).toString("hex").toUpperCase(),
+      date = new Date().toISOString();
     try {
-      const existing = database
-        .prepare("SELECT reference,fingerprint FROM quotes WHERE idempotency=?")
-        .get(key) as { reference: string; fingerprint: string } | undefined;
-      if (existing) {
-        if (existing.fingerprint !== fingerprint)
-          throw new Error("IDEMPOTENCY_CONFLICT");
-        database.exec("COMMIT");
-        return { reference: existing.reference, created: false };
-      }
-      const id = randomUUID(),
-        reference = "EC-" + randomBytes(10).toString("hex").toUpperCase(),
-        date = new Date().toISOString();
-      database
-        .prepare(
+      // Demande, pièces et journal d’un seul bloc ; la clé d’idempotence
+      // est unique : un second envoi simultané échoue puis est rejoué.
+      await database.batch([
+        [
           "INSERT INTO quotes(id,reference,idempotency,fingerprint,payload,volume,agency,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)",
-        )
-        .run(
-          id,
-          reference,
-          key,
-          fingerprint,
-          JSON.stringify(input),
-          quoteVolume(input),
-          input.agency,
-          date,
-          date,
-        );
-      for (const upload of uploads)
-        database
-          .prepare(
-            "INSERT INTO documents(id,quote_id,name,mime,bytes,created_at) VALUES(?,?,?,?,?,?)",
-          )
-          .run(randomUUID(), id, upload.name, upload.mime, upload.bytes, date);
-      database
-        .prepare(
-          "INSERT INTO audit(actor,action,object_id,detail,created_at) VALUES(?,?,?,?,?)",
-        )
-        .run("guest", "quote.created", id, "{}", date);
-      database.exec("COMMIT");
+          [
+            id,
+            reference,
+            key,
+            fingerprint,
+            JSON.stringify(input),
+            quoteVolume(input),
+            input.agency,
+            date,
+            date,
+          ],
+        ],
+        ...uploads.map(
+          (upload) =>
+            [
+              "INSERT INTO documents(id,quote_id,name,mime,bytes,created_at) VALUES(?,?,?,?,?,?)",
+              [randomUUID(), id, upload.name, upload.mime, upload.bytes, date],
+            ] as [string, unknown[]],
+        ),
+        [AUDIT, ["guest", "quote.created", id, "{}", date]],
+      ]);
       return { reference, created: true };
     } catch (e) {
-      database.exec("ROLLBACK");
+      const raced = await replay();
+      if (raced) return raced;
       throw e;
     }
   },
-  list() {
-    return db()
-      .prepare(
-        "SELECT id,reference,payload,volume,status,agency,created_at,updated_at FROM quotes ORDER BY created_at DESC",
-      )
-      .all()
-      .map((row) => ({ ...row })) as QuoteRecord[];
+  async list() {
+    return (await db()).all<QuoteRecord>(
+      "SELECT id,reference,payload,volume,status,agency,created_at,updated_at FROM quotes ORDER BY created_at DESC",
+    );
   },
 };
-export function updateQuote(
+/** Changement d’état conditionnel : refusé si l’état a changé entre-temps. */
+export async function updateQuote(
   id: string,
   to: QuoteState,
   reason: string,
   actor: string,
 ) {
-  const database = db();
-  database.exec("BEGIN IMMEDIATE");
-  try {
-    const row = database
-      .prepare("SELECT status FROM quotes WHERE id=?")
-      .get(id) as { status: QuoteState } | undefined;
-    if (!row || !canTransition(row.status, to))
-      throw new Error("Transition non autorisée");
-    const date = new Date().toISOString();
-    database
-      .prepare("UPDATE quotes SET status=?,updated_at=? WHERE id=?")
-      .run(to, date, id);
-    database
-      .prepare(
-        "INSERT INTO audit(actor,action,object_id,detail,created_at) VALUES(?,?,?,?,?)",
-      )
-      .run(
-        actor,
-        "quote.status",
-        id,
-        JSON.stringify({ from: row.status, to, reason }),
-        date,
-      );
-    database.exec("COMMIT");
-  } catch (e) {
-    database.exec("ROLLBACK");
-    throw e;
-  }
+  const database = await db();
+  const row = await database.get<{ status: QuoteState }>(
+    "SELECT status FROM quotes WHERE id=?",
+    id,
+  );
+  if (!row || !canTransition(row.status, to))
+    throw new Error("Transition non autorisée");
+  const date = new Date().toISOString();
+  const result = await database.run(
+    "UPDATE quotes SET status=?,updated_at=? WHERE id=? AND status=?",
+    to,
+    date,
+    id,
+    row.status,
+  );
+  if (!result.changes) throw new Error("Transition non autorisée");
+  await database.run(
+    AUDIT,
+    actor,
+    "quote.status",
+    id,
+    JSON.stringify({ from: row.status, to, reason }),
+    date,
+  );
 }

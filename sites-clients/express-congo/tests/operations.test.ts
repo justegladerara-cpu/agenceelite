@@ -4,8 +4,8 @@ import {
   getEntity,
   listEntities,
   operation,
-  opsDb,
 } from "@/server/operations-repository";
+import { db } from "@/server/database";
 import { seedAccounts } from "@/server/demo-auth";
 const admin: Actor = {
     id: "admin-demo",
@@ -39,166 +39,172 @@ const measures = {
   quantity: "3",
   unit: "cm",
 };
-beforeEach(() => {
-  seedAccounts();
-  opsDb().exec("DELETE FROM assignments; DELETE FROM entities;");
+beforeEach(async () => {
+  await seedAccounts();
+  const sql = await db();
+  await sql.run("DELETE FROM assignments");
+  await sql.run("DELETE FROM entities");
 });
-const create = () =>
-  operation(admin, "newShipment", {
+const create = async () =>
+  (await operation(admin, "newShipment", {
     owner: client.id,
     agency: "paris",
     service: "maritime",
     destination: "Brazzaville",
-  }) as ReturnType<typeof getEntity>;
-test("clients et agences ne lisent ni ne modifient les dossiers d’autrui", () => {
-  const s = create();
-  expect(getEntity(client, s.id).id).toBe(s.id);
+  })) as Awaited<ReturnType<typeof getEntity>>;
+test("clients et agences ne lisent ni ne modifient les dossiers d’autrui", async () => {
+  const s = await create();
+  expect((await getEntity(client, s.id)).id).toBe(s.id);
   for (const actor of [otherClient, otherAgent]) {
-    expect(() => getEntity(actor, s.id)).toThrow("ACCESS_DENIED");
-    expect(listEntities(actor)).toHaveLength(0);
-    expect(() =>
+    await expect(getEntity(actor, s.id)).rejects.toThrow("ACCESS_DENIED");
+    expect(await listEntities(actor)).toHaveLength(0);
+    await expect(
       operation(actor, "event", {
         shipmentId: s.id,
         status: "recu-en-agence",
         location: "Paris",
       }),
-    ).toThrow("ACCESS_DENIED");
+    ).rejects.toThrow("ACCESS_DENIED");
   }
-  expect(() =>
+  await expect(
     operation(client, "event", {
       shipmentId: s.id,
       status: "recu-en-agence",
       location: "Paris",
     }),
-  ).toThrow("ACCESS_DENIED");
+  ).rejects.toThrow("ACCESS_DENIED");
 });
-test("réception, départ et remise préservent l’historique et une preuve privée", () => {
-  const s = create();
-  operation(admin, "receiveParcel", {
+test("réception, départ et remise préservent l’historique et une preuve privée", async () => {
+  const s = await create();
+  await operation(admin, "receiveParcel", {
     shipmentId: s.id,
     declared: measures,
     controlled: measures,
     description: "Cartons fictifs",
   });
-  const departure = operation(admin, "newDeparture", {
+  const departure = (await operation(admin, "newDeparture", {
     agency: "paris",
     mode: "maritime",
     scheduledAt: "2026-12-01T10:00:00Z",
-  }) as ReturnType<typeof getEntity>;
+  })) as Awaited<ReturnType<typeof getEntity>>;
   for (const status of ["recu-en-agence", "controle", "en-attente-de-depart"])
-    operation(admin, "event", {
+    await operation(admin, "event", {
       shipmentId: s.id,
       status,
       location: "Agence de démonstration",
     });
-  operation(admin, "assignDeparture", {
+  await operation(admin, "assignDeparture", {
     shipmentId: s.id,
     departureId: departure.id,
   });
-  expect(() =>
+  await expect(
     operation(admin, "assignDeparture", {
       shipmentId: s.id,
       departureId: departure.id,
     }),
-  ).toThrow("ASSIGNMENT_CONFLICT");
+  ).rejects.toThrow("ASSIGNMENT_CONFLICT");
   for (const status of ["expedie", "arrive", "disponible-au-retrait"])
-    operation(admin, "event", {
+    await operation(admin, "event", {
       shipmentId: s.id,
       status,
       location: "Agence de démonstration",
     });
-  expect(() =>
+  await expect(
     operation(admin, "event", {
       shipmentId: s.id,
       status: "remis",
       location: "Agence",
     }),
-  ).toThrow("WITHDRAWAL_PROOF_REQUIRED");
-  operation(admin, "event", {
+  ).rejects.toThrow("WITHDRAWAL_PROOF_REQUIRED");
+  await operation(admin, "event", {
     shipmentId: s.id,
     status: "remis",
     location: "Agence",
     proof: "Preuve fictive",
     entitlementConfirmed: true,
   });
-  expect(getEntity(client, s.id).payload.status).toBe("remis");
-  const visible = listEntities(client);
+  expect((await getEntity(client, s.id)).payload.status).toBe("remis");
+  const visible = await listEntities(client);
   expect(visible.filter((e) => e.kind === "event")).toHaveLength(7);
   expect(visible.find((e) => e.kind === "document")?.payload.public).toBe(
     false,
   );
-  expect(listEntities(otherClient)).toHaveLength(0);
+  expect(await listEntities(otherClient)).toHaveLength(0);
 });
-test("écart de poids bloque l’affectation jusqu’à accord tracé", () => {
-  const s = create();
-  const parcel = operation(admin, "receiveParcel", {
+test("écart de poids bloque l’affectation jusqu’à accord tracé", async () => {
+  const s = await create();
+  const parcel = (await operation(admin, "receiveParcel", {
     shipmentId: s.id,
     declared: measures,
     controlled: { ...measures, weight: "13" },
     description: "Cartons fictifs",
-  }) as ReturnType<typeof getEntity>;
-  const departure = operation(admin, "newDeparture", {
+  })) as Awaited<ReturnType<typeof getEntity>>;
+  const departure = (await operation(admin, "newDeparture", {
     agency: "paris",
     mode: "maritime",
     scheduledAt: "2026-12-01T10:00:00Z",
-  }) as ReturnType<typeof getEntity>;
-  expect(() =>
+  })) as Awaited<ReturnType<typeof getEntity>>;
+  await expect(
     operation(admin, "assignDeparture", {
       shipmentId: s.id,
       departureId: departure.id,
     }),
-  ).toThrow("REVIEW_REQUIRED");
-  operation(admin, "approveMeasures", {
+  ).rejects.toThrow("REVIEW_REQUIRED");
+  await operation(admin, "approveMeasures", {
     parcelId: parcel.id,
     reason: "Accord fictif documenté",
   });
   expect(
-    operation(admin, "assignDeparture", {
+    await operation(admin, "assignDeparture", {
       shipmentId: s.id,
       departureId: departure.id,
     }),
   ).toEqual({ ok: true });
 });
-test("proposition versionnée, acceptation propriétaire, aucun paiement confirmé", () => {
-  const s = create();
-  const proposal = operation(admin, "proposal", {
+test("proposition versionnée, acceptation propriétaire, aucun paiement confirmé", async () => {
+  const s = await create();
+  const proposal = (await operation(admin, "proposal", {
     shipmentId: s.id,
     totalMinor: "12000",
     currency: "EUR",
     exclusions: "Exclusions fictives",
     validUntil: "2099-01-01",
-  }) as ReturnType<typeof getEntity>;
-  expect(() =>
+  })) as Awaited<ReturnType<typeof getEntity>>;
+  await expect(
     operation(otherClient, "acceptProposal", { proposalId: proposal.id }),
-  ).toThrow("ACCESS_DENIED");
+  ).rejects.toThrow("ACCESS_DENIED");
   expect(
-    operation(client, "acceptProposal", { proposalId: proposal.id }),
+    await operation(client, "acceptProposal", { proposalId: proposal.id }),
   ).toEqual({ ok: true, payment: "non-confirme" });
-  const revised = operation(admin, "proposal", {
+  const revised = (await operation(admin, "proposal", {
     shipmentId: s.id,
     totalMinor: "14000",
     currency: "EUR",
     exclusions: "Nouvelle version fictive",
     validUntil: "2099-01-01",
-  }) as ReturnType<typeof getEntity>;
+  })) as Awaited<ReturnType<typeof getEntity>>;
   expect(revised.payload.version).toBe(2);
-  expect(getEntity(client, proposal.id).payload.totalMinor).toBe("12000");
+  expect((await getEntity(client, proposal.id)).payload.totalMinor).toBe(
+    "12000",
+  );
 });
-test("une correction ajoute un événement sans effacer l’original", () => {
-  const s = create();
-  const event = operation(admin, "event", {
+test("une correction ajoute un événement sans effacer l’original", async () => {
+  const s = await create();
+  const event = (await operation(admin, "event", {
     shipmentId: s.id,
     status: "recu-en-agence",
     location: "Ancien lieu",
-  }) as ReturnType<typeof getEntity>;
-  const correction = operation(admin, "correctEvent", {
+  })) as Awaited<ReturnType<typeof getEntity>>;
+  const correction = (await operation(admin, "correctEvent", {
     eventId: event.id,
     location: "Lieu corrigé",
     reason: "Correction fictive",
-  }) as ReturnType<typeof getEntity>;
-  expect(getEntity(admin, event.id).payload.location).toBe("Ancien lieu");
-  expect(correction.payload.corrects).toBe(event.id);
-  expect(listEntities(client).filter((e) => e.kind === "event")).toHaveLength(
-    2,
+  })) as Awaited<ReturnType<typeof getEntity>>;
+  expect((await getEntity(admin, event.id)).payload.location).toBe(
+    "Ancien lieu",
   );
+  expect(correction.payload.corrects).toBe(event.id);
+  expect(
+    (await listEntities(client)).filter((e) => e.kind === "event"),
+  ).toHaveLength(2);
 });

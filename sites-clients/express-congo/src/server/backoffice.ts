@@ -38,9 +38,8 @@ const quoteScope = (actor: Actor, agency: string) =>
   actor.role !== "client" &&
   canRead(actor, { owner: "", agency, kind: "quote" });
 
-export function visibleQuotes(actor: Actor): QuoteView[] {
-  return localQuotes
-    .list()
+export async function visibleQuotes(actor: Actor): Promise<QuoteView[]> {
+  return (await localQuotes.list())
     .filter((q) => quoteScope(actor, q.agency))
     .map((q) => {
       const p = JSON.parse(q.payload) as QuoteInput;
@@ -71,7 +70,7 @@ export function visibleQuotes(actor: Actor): QuoteView[] {
 }
 
 /** Changement d’état contrôlé côté serveur : rôle, agence puis transition. */
-export function setQuoteStatus(
+export async function setQuoteStatus(
   actor: Actor,
   id: unknown,
   to: unknown,
@@ -79,8 +78,9 @@ export function setQuoteStatus(
 ) {
   if (typeof id !== "string" || !quoteStates.includes(to as QuoteState))
     throw new Error("INVALID_INPUT");
-  const row = db().prepare("SELECT agency FROM quotes WHERE id=?").get(id) as
-    { agency: string } | undefined;
+  const row = await (
+    await db()
+  ).get<{ agency: string }>("SELECT agency FROM quotes WHERE id=?", id);
   if (!row || !quoteScope(actor, row.agency) || !canWrite(actor, "quote"))
     throw new Error("ACCESS_DENIED");
   const motive =
@@ -88,7 +88,7 @@ export function setQuoteStatus(
       ? reason.trim().slice(0, 500)
       : "Mise à jour depuis la gestion";
   try {
-    updateQuote(id, to as QuoteState, motive, actor.id);
+    await updateQuote(id, to as QuoteState, motive, actor.id);
   } catch {
     throw new Error("INVALID_TRANSITION");
   }
@@ -96,20 +96,24 @@ export function setQuoteStatus(
 }
 
 /** Journal d’audit : réservé à l’administrateur, sans contenu métier. */
-export function recentAudit(actor: Actor, limit = 40): AuditView[] {
+export async function recentAudit(
+  actor: Actor,
+  limit = 40,
+): Promise<AuditView[]> {
   if (actor.role !== "admin") return [];
   return (
-    db()
-      .prepare(
-        "SELECT id,actor,action,object_id,created_at FROM audit ORDER BY id DESC LIMIT ?",
-      )
-      .all(limit) as {
+    await (
+      await db()
+    ).all<{
       id: number;
       actor: string;
       action: string;
       object_id: string;
       created_at: string;
-    }[]
+    }>(
+      "SELECT id,actor,action,object_id,created_at FROM audit ORDER BY id DESC LIMIT ?",
+      limit,
+    )
   ).map((r) => ({
     id: r.id,
     actor: r.actor,

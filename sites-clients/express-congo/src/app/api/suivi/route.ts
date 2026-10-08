@@ -7,7 +7,7 @@ export async function POST() {
       { message: "Le suivi en ligne n’est pas activé." },
       { status: 503 },
     );
-  if (!rateLimit("tracking-global", 10, 600))
+  if (!(await rateLimit("tracking-global", 10, 600)))
     return NextResponse.json(
       { message: "Réessayez plus tard." },
       { status: 429 },

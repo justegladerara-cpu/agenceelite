@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       { message: "Origine non autorisée." },
       { status: 403 },
     );
-  if (!rateLimit("editor-login", 8, 600))
+  if (!(await rateLimit("editor-login", 8, 600)))
     return NextResponse.json(
       { message: "Réessayez plus tard." },
       { status: 429 },

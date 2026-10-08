@@ -25,7 +25,7 @@ export async function GET() {
 export async function POST(request: Request) {
   if (!isDemo() || !sameOrigin(request))
     return new Response(null, { status: 403 });
-  if (!rateLimit("demo-signin", 100, 600))
+  if (!(await rateLimit("demo-signin", 100, 600)))
     return new Response(null, { status: 429 });
   const input = await request.json().catch(() => ({}));
   if (

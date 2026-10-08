@@ -35,10 +35,10 @@ export const quote: QuoteInput = {
   privacy: true,
   marketing: false,
 };
-beforeEach(() => {
-  db().exec(
-    "DELETE FROM documents; DELETE FROM quotes; DELETE FROM audit; DELETE FROM rate_limits;",
-  );
+beforeEach(async () => {
+  const sql = await db();
+  for (const table of ["documents", "quotes", "audit", "rate_limits"])
+    await sql.run(`DELETE FROM ${table}`);
 });
 test("trois cartons donnent exactement 0,288 m³", () =>
   expect(volume([parcel])).toBe("0.288"));
@@ -57,28 +57,38 @@ test("valeurs négatives, vides, nulles, poids invalide et unité refusés", () 
   expect(validateParcel({ ...parcel, quantity: "1.5" }).quantity).toBeTruthy();
   expect(validateParcel({ ...parcel, unit: "mm" as "cm" }).unit).toBeTruthy();
 });
-test("demande valide et volume repris", () => {
+test("demande valide et volume repris", async () => {
   expect(validateQuote(quote)).toEqual({});
-  localQuotes.create(quote, "test-key-000000001");
-  expect(localQuotes.list()[0].volume).toBe("0.288");
+  await localQuotes.create(quote, "test-key-000000001");
+  expect((await localQuotes.list())[0].volume).toBe("0.288");
 });
-test("double soumission conserve une seule référence", () => {
-  const first = localQuotes.create(quote, "test-key-000000001"),
-    second = localQuotes.create(quote, "test-key-000000001");
+test("double soumission conserve une seule référence", async () => {
+  const first = await localQuotes.create(quote, "test-key-000000001"),
+    second = await localQuotes.create(quote, "test-key-000000001");
   expect(second.reference).toBe(first.reference);
   expect(second.created).toBe(false);
-  expect(localQuotes.list()).toHaveLength(1);
+  expect(await localQuotes.list()).toHaveLength(1);
 });
-test("clé rejouée avec contenu changé est refusée", () => {
-  localQuotes.create(quote, "test-key-000000001");
-  expect(() =>
+test("soumissions simultanées : une seule demande enregistrée", async () => {
+  const results = await Promise.all(
+    Array.from({ length: 5 }, () =>
+      localQuotes.create(quote, "test-key-000000002"),
+    ),
+  );
+  expect(new Set(results.map((r) => r.reference)).size).toBe(1);
+  expect(results.filter((r) => r.created)).toHaveLength(1);
+  expect(await localQuotes.list()).toHaveLength(1);
+});
+test("clé rejouée avec contenu changé est refusée", async () => {
+  await localQuotes.create(quote, "test-key-000000001");
+  await expect(
     localQuotes.create(
       { ...quote, name: "Autre client" },
       "test-key-000000001",
     ),
-  ).toThrow("IDEMPOTENCY_CONFLICT");
+  ).rejects.toThrow("IDEMPOTENCY_CONFLICT");
 });
-test("pièces et demande atomiques, sans duplication", () => {
+test("pièces et demande atomiques, sans duplication", async () => {
   const uploads = [
     {
       name: "test.pdf",
@@ -86,19 +96,26 @@ test("pièces et demande atomiques, sans duplication", () => {
       bytes: Buffer.from("%PDF-test"),
     },
   ];
-  localQuotes.create(quote, "test-key-000000001", uploads);
-  localQuotes.create(quote, "test-key-000000001", uploads);
-  expect(db().prepare("SELECT count(*) AS n FROM documents").get()?.n).toBe(1);
+  await localQuotes.create(quote, "test-key-000000001", uploads);
+  await localQuotes.create(quote, "test-key-000000001", uploads);
+  expect(
+    (
+      await (
+        await db()
+      ).get<{ n: number }>("SELECT count(*) AS n FROM documents")
+    )?.n,
+  ).toBe(1);
 });
 test("états commerciaux ne confirment pas un paiement", () => {
   expect(canTransition("nouveau", "acceptee")).toBe(false);
   expect(canTransition("nouveau", "en-etude")).toBe(true);
   expect(canTransition("acceptee", "en-etude")).toBe(false);
 });
-test("limitation persistée des essais", () => {
-  expect(rateLimit("test", 2)).toBe(true);
-  expect(rateLimit("test", 2)).toBe(true);
-  expect(rateLimit("test", 2)).toBe(false);
+test("limitation persistée des essais", async () => {
+  expect(await rateLimit("test", 2)).toBe(true);
+  expect(await rateLimit("test", 2)).toBe(true);
+  expect(await rateLimit("test", 2)).toBe(false);
+  expect(await rateLimit("test", 2)).toBe(false);
 });
 test("profil, route, téléphone et vie privée validés serveur", () => {
   expect(
@@ -109,8 +126,8 @@ test("profil, route, téléphone et vie privée validés serveur", () => {
     validateQuote({ ...quote, privacy: false, phone: "0600000000" }),
   ).toHaveProperty("privacy");
 });
-test("sauvegarde et restauration récupèrent devis et pièces privées", () => {
-  localQuotes.create(quote, "test-key-000000001", [
+test("sauvegarde et restauration récupèrent devis et pièces privées", async () => {
+  await localQuotes.create(quote, "test-key-000000001", [
     {
       name: "test.pdf",
       mime: "application/pdf",
@@ -120,7 +137,7 @@ test("sauvegarde et restauration récupèrent devis et pièces privées", () => 
   const suffix = randomUUID(),
     backup = resolve(`.data/backup-${suffix}.db`),
     restored = resolve(`.data/restored-${suffix}.db`);
-  db().prepare("VACUUM INTO ?").run(backup);
+  await (await db()).run("VACUUM INTO ?", backup);
   const result = spawnSync(
     process.execPath,
     ["scripts/db.mjs", "restore", backup],

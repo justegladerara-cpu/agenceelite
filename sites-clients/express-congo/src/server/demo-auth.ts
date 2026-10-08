@@ -7,8 +7,9 @@ import {
 } from "node:crypto";
 import { cookies } from "next/headers";
 import { Actor, Role } from "@/domain/operations";
-import { opsDb } from "./operations-repository";
-import { isDemo, siteUrl } from "@/config";
+import { db } from "./database";
+import { isDemo } from "@/config";
+import { secureCookies } from "./security";
 const hash = (value: string) =>
   createHash("sha256").update(value).digest("hex");
 export const demoAccounts = [
@@ -43,21 +44,28 @@ export const demoAccounts = [
     agency: "paris",
   },
 ] as const;
-export function seedAccounts() {
+let seeded = false;
+export async function seedAccounts() {
   if (!isDemo()) throw new Error("DEMO_DISABLED");
-  for (const user of demoAccounts) {
-    const salt = "ec-demo-" + user.id;
-    opsDb()
-      .prepare("INSERT OR IGNORE INTO demo_users VALUES(?,?,?,?,?,?,NULL,1)")
-      .run(
-        user.id,
-        user.email,
-        scryptSync("DemoExpress!2026", salt, 64).toString("hex"),
-        salt,
-        user.role,
-        user.agency,
-      );
-  }
+  if (seeded) return;
+  const database = await db();
+  await database.batch(
+    demoAccounts.map((user) => {
+      const salt = "ec-demo-" + user.id;
+      return [
+        "INSERT OR IGNORE INTO demo_users VALUES(?,?,?,?,?,?,NULL,1)",
+        [
+          user.id,
+          user.email,
+          scryptSync("DemoExpress!2026", salt, 64).toString("hex"),
+          salt,
+          user.role,
+          user.agency,
+        ],
+      ] as [string, unknown[]];
+    }),
+  );
+  seeded = true;
 }
 type User = {
   id: string;
@@ -83,10 +91,10 @@ export function demoMfa() {
     .padStart(6, "0");
 }
 export async function signIn(email: string, password: string, code: string) {
-  seedAccounts();
-  const row = opsDb()
-    .prepare("SELECT * FROM demo_users WHERE email=?")
-    .get(email.toLowerCase()) as User | undefined;
+  await seedAccounts();
+  const row = await (
+    await db()
+  ).get<User>("SELECT * FROM demo_users WHERE email=?", email.toLowerCase());
   const derived = scryptSync(password, row?.salt || "missing-user", 64),
     expected = row ? Buffer.from(row.password_hash, "hex") : Buffer.alloc(64);
   if (
@@ -97,13 +105,18 @@ export async function signIn(email: string, password: string, code: string) {
   )
     throw new Error("ACCESS_DENIED");
   const token = randomBytes(32).toString("hex");
-  opsDb()
-    .prepare("INSERT INTO user_sessions VALUES(?,?,?)")
-    .run(hash(token), row.id, Date.now() + 3600000);
+  await (
+    await db()
+  ).run(
+    "INSERT INTO user_sessions VALUES(?,?,?)",
+    hash(token),
+    row.id,
+    Date.now() + 3600000,
+  );
   (await cookies()).set("ec-demo-user", token, {
     httpOnly: true,
     sameSite: "strict",
-    secure: siteUrl().startsWith("https:"),
+    secure: secureCookies(),
     maxAge: 3600,
     path: "/",
   });
@@ -118,17 +131,21 @@ export async function currentActor(): Promise<Actor | null> {
   if (!isDemo()) return null;
   const token = (await cookies()).get("ec-demo-user")?.value;
   if (!token) return null;
-  const row = opsDb()
-    .prepare(
-      "SELECT u.id,u.role,u.agency,u.organization FROM user_sessions s JOIN demo_users u ON u.id=s.user_id WHERE s.hash=? AND s.expires_at>? AND u.verified=1",
-    )
-    .get(hash(token), Date.now()) as Actor | undefined;
+  const row = await (
+    await db()
+  ).get<Actor>(
+    "SELECT u.id,u.role,u.agency,u.organization FROM user_sessions s JOIN demo_users u ON u.id=s.user_id WHERE s.hash=? AND s.expires_at>? AND u.verified=1",
+    hash(token),
+    Date.now(),
+  );
   return row ? { ...row } : null;
 }
 export async function signOut() {
   const jar = await cookies(),
     token = jar.get("ec-demo-user")?.value;
   if (token)
-    opsDb().prepare("DELETE FROM user_sessions WHERE hash=?").run(hash(token));
+    await (
+      await db()
+    ).run("DELETE FROM user_sessions WHERE hash=?", hash(token));
   jar.delete("ec-demo-user");
 }

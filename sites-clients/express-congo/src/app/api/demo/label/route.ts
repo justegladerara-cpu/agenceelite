@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   if (!actor || actor.role === "client")
     return new Response(null, { status: 403 });
   try {
-    const item = getEntity(
+    const item = await getEntity(
       actor,
       new URL(request.url).searchParams.get("id") || "",
     );

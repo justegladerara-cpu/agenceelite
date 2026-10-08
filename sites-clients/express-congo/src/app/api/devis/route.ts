@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   if (Number(request.headers.get("content-length") || 0) > 11000000)
     return fail("Pièces jointes trop volumineuses.", 413);
   // Local preview only: a single global bucket avoids trusting proxy IP headers.
-  if (!rateLimit("quote-global", 100, 600))
+  if (!(await rateLimit("quote-global", 100, 600)))
     return fail("Trop de demandes. Réessayez plus tard.", 429);
   const key = request.headers.get("idempotency-key") || "";
   if (!/^[a-zA-Z0-9-]{16,100}$/.test(key))
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
         name: file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100),
       });
     }
-    const result = localQuotes.create(input, key, uploads);
+    const result = await localQuotes.create(input, key, uploads);
     return NextResponse.json(
       {
         reference: result.reference,

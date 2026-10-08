@@ -5,7 +5,7 @@ export async function GET(request: Request) {
   const actor = await currentActor();
   if (!actor) return new Response(null, { status: 401 });
   try {
-    const item = getEntity(
+    const item = await getEntity(
       actor,
       new URL(request.url).searchParams.get("id") || "",
     );

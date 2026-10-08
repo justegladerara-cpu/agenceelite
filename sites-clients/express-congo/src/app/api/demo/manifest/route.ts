@@ -5,13 +5,13 @@ export async function GET(request: Request) {
   if (!actor || actor.role === "client")
     return new Response(null, { status: 403 });
   try {
-    const departure = getEntity(
+    const departure = await getEntity(
       actor,
       new URL(request.url).searchParams.get("id") || "",
     );
     if (departure.kind !== "departure")
       return new Response(null, { status: 404 });
-    const shipments = listEntities(actor).filter(
+    const shipments = (await listEntities(actor)).filter(
       (i) => i.kind === "shipment" && i.payload.departure === departure.id,
     );
     const cell = (v: unknown) =>

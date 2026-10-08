@@ -2,10 +2,27 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { db } from "./database";
 import { isDemo, siteUrl } from "@/config";
+/**
+ * Origine attendue : SITE_URL si défini, sinon le domaine réellement
+ * demandé (en-tête Host), identique en local et derrière Cloudflare.
+ */
 export function sameOrigin(request: Request) {
   const origin = request.headers.get("origin");
-  return origin === new URL(siteUrl()).origin;
+  if (!origin) return false;
+  if (process.env.SITE_URL)
+    return origin === new URL(process.env.SITE_URL).origin;
+  const host = request.headers.get("host");
+  try {
+    return !!host && new URL(origin).host === host;
+  } catch {
+    return false;
+  }
 }
+/** Cookies Secure en HTTPS ; COOKIE_SECURE=false réservé aux aperçus locaux en HTTP. */
+export const secureCookies = () =>
+  process.env.COOKIE_SECURE
+    ? process.env.COOKIE_SECURE === "true"
+    : siteUrl().startsWith("https:") || process.env.DATABASE_DRIVER === "d1";
 export function safeEqual(a: string, b: string) {
   const ah = createHash("sha256").update(a).digest(),
     bh = createHash("sha256").update(b).digest();
@@ -17,19 +34,22 @@ export async function editorSession() {
   if (!isDemo()) return false;
   const token = (await cookies()).get("ec-demo-editor")?.value;
   if (!token) return false;
-  const session = db()
-    .prepare("SELECT expires_at FROM sessions WHERE token_hash=?")
-    .get(hash(token)) as { expires_at: number } | undefined;
+  const session = await (
+    await db()
+  ).get<{ expires_at: number }>(
+    "SELECT expires_at FROM sessions WHERE token_hash=?",
+    hash(token),
+  );
   return !!session && session.expires_at > Date.now();
 }
 export async function createEditorSession() {
   const token = randomBytes(32).toString("hex");
-  db()
-    .prepare("INSERT INTO sessions VALUES(?,?)")
-    .run(hash(token), Date.now() + 3600000);
+  await (
+    await db()
+  ).run("INSERT INTO sessions VALUES(?,?)", hash(token), Date.now() + 3600000);
   (await cookies()).set("ec-demo-editor", token, {
     httpOnly: true,
-    secure: siteUrl().startsWith("https:"),
+    secure: secureCookies(),
     sameSite: "strict",
     maxAge: 3600,
     path: "/",
@@ -39,6 +59,8 @@ export async function logout() {
   const jar = await cookies();
   const token = jar.get("ec-demo-editor")?.value;
   if (token)
-    db().prepare("DELETE FROM sessions WHERE token_hash=?").run(hash(token));
+    await (
+      await db()
+    ).run("DELETE FROM sessions WHERE token_hash=?", hash(token));
   jar.delete("ec-demo-editor");
 }

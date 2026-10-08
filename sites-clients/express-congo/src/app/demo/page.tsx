@@ -17,11 +17,11 @@ export default async function Demo() {
   return (
     <Operations
       actor={actor}
-      entities={actor ? listEntities(actor) : []}
+      entities={actor ? await listEntities(actor) : []}
       accounts={demoAccounts}
       code={demoMfa()}
-      quotes={actor ? visibleQuotes(actor) : []}
-      audit={actor ? recentAudit(actor) : []}
+      quotes={actor ? await visibleQuotes(actor) : []}
+      audit={actor ? await recentAudit(actor) : []}
     />
   );
 }

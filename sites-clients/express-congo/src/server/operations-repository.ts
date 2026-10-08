@@ -8,17 +8,6 @@ import {
   shipmentTransition,
 } from "@/domain/operations";
 import { ParcelInput, validateParcel } from "@/domain/measurements";
-export function opsDb() {
-  const database = db();
-  database.exec(`
-CREATE TABLE IF NOT EXISTS entities(id TEXT PRIMARY KEY,kind TEXT NOT NULL,owner TEXT NOT NULL,agency TEXT NOT NULL,revision INTEGER NOT NULL DEFAULT 1,payload TEXT NOT NULL,created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS demo_users(id TEXT PRIMARY KEY,email TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,salt TEXT NOT NULL,role TEXT NOT NULL,agency TEXT NOT NULL,organization TEXT,verified INTEGER NOT NULL DEFAULT 0);
-CREATE TABLE IF NOT EXISTS user_sessions(hash TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES demo_users(id),expires_at INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS auth_tokens(hash TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES demo_users(id),purpose TEXT NOT NULL,expires_at INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS assignments(parcel_id TEXT PRIMARY KEY REFERENCES entities(id),shipment_id TEXT NOT NULL REFERENCES entities(id));
-`);
-  return database;
-}
 type Row = {
   id: string;
   kind: string;
@@ -33,35 +22,39 @@ const decode = (row: Row): Entity => ({
   payload: JSON.parse(row.payload),
   createdAt: row.created_at,
 });
-export function listEntities(actor: Actor) {
+export async function listEntities(actor: Actor) {
   return (
-    opsDb()
-      .prepare("SELECT * FROM entities ORDER BY created_at DESC")
-      .all() as Row[]
+    await (
+      await db()
+    ).all<Row>("SELECT * FROM entities ORDER BY created_at DESC")
   )
     .map(decode)
     .filter((item) => canRead(actor, item));
 }
-export function getEntity(actor: Actor, id: string): Entity {
-  const row = opsDb().prepare("SELECT * FROM entities WHERE id=?").get(id) as
-    Row | undefined;
+export async function getEntity(actor: Actor, id: string): Promise<Entity> {
+  const row = await (
+    await db()
+  ).get<Row>("SELECT * FROM entities WHERE id=?", id);
   if (!row || !canRead(actor, row)) throw new Error("ACCESS_DENIED");
   return decode(row);
 }
-function audit(actor: Actor, action: string, id: string, detail: unknown) {
-  opsDb()
-    .prepare(
-      "INSERT INTO audit(actor,action,object_id,detail,created_at) VALUES(?,?,?,?,?)",
-    )
-    .run(
-      actor.id,
-      action,
-      id,
-      JSON.stringify(detail),
-      new Date().toISOString(),
-    );
+const AUDIT =
+  "INSERT INTO audit(actor,action,object_id,detail,created_at) VALUES(?,?,?,?,?)";
+const auditParams = (
+  actor: Actor,
+  action: string,
+  id: string,
+  detail: unknown,
+) => [actor.id, action, id, JSON.stringify(detail), new Date().toISOString()];
+async function audit(
+  actor: Actor,
+  action: string,
+  id: string,
+  detail: unknown,
+) {
+  await (await db()).run(AUDIT, ...auditParams(actor, action, id, detail));
 }
-function put(
+async function put(
   actor: Actor,
   kind: string,
   owner: string,
@@ -78,51 +71,60 @@ function put(
     throw new Error("ACCESS_DENIED");
   const id = randomUUID(),
     date = new Date().toISOString();
-  opsDb()
-    .prepare("INSERT INTO entities VALUES(?,?,?,?,1,?,?)")
-    .run(id, kind, owner, agency, JSON.stringify(payload), date);
-  audit(actor, kind + ".created", id, { kind });
+  // Dossier et ligne de journal enregistrés ensemble, d’un seul bloc.
+  await (
+    await db()
+  ).batch([
+    [
+      "INSERT INTO entities VALUES(?,?,?,?,1,?,?)",
+      [id, kind, owner, agency, JSON.stringify(payload), date],
+    ],
+    [AUDIT, auditParams(actor, kind + ".created", id, { kind })],
+  ]);
   return getEntity(actor, id);
 }
-function replace(actor: Actor, item: Entity, payload: Record<string, unknown>) {
+async function replace(
+  actor: Actor,
+  item: Entity,
+  payload: Record<string, unknown>,
+) {
   if (!canRead(actor, item) || !canWrite(actor, item.kind))
     throw new Error("ACCESS_DENIED");
-  const result = opsDb()
-    .prepare(
-      "UPDATE entities SET payload=?,revision=revision+1 WHERE id=? AND revision=?",
-    )
-    .run(JSON.stringify(payload), item.id, item.revision);
+  // Verrou optimiste : refusé si le dossier a changé depuis sa lecture.
+  const result = await (
+    await db()
+  ).run(
+    "UPDATE entities SET payload=?,revision=revision+1 WHERE id=? AND revision=?",
+    JSON.stringify(payload),
+    item.id,
+    item.revision,
+  );
   if (!result.changes) throw new Error("CONFLICT");
-  audit(actor, item.kind + ".updated", item.id, {
+  await audit(actor, item.kind + ".updated", item.id, {
     revision: item.revision + 1,
   });
 }
-export function operation(
+/**
+ * Commande métier. D1 n’offre pas de transaction interactive : chaque
+ * écriture est protégée par contrainte, lot atomique ou verrou de révision.
+ */
+export async function operation(
   actor: Actor,
   command: string,
   input: Record<string, unknown>,
 ) {
-  const database = opsDb();
-  database.exec("BEGIN IMMEDIATE");
-  try {
-    const result = perform(actor, command, input);
-    database.exec("COMMIT");
-    return result;
-  } catch (e) {
-    database.exec("ROLLBACK");
-    throw e;
-  }
+  return perform(actor, command, input);
 }
 function text(value: unknown, max = 2000) {
   if (typeof value !== "string" || !value.trim() || value.length > max)
     throw new Error("INVALID_INPUT");
   return value.trim();
 }
-function perform(
+async function perform(
   actor: Actor,
   command: string,
   input: Record<string, unknown>,
-): unknown {
+): Promise<unknown> {
   const domains: Record<string, string> = {
     newShipment: "shipment",
     receiveParcel: "parcel",
@@ -147,11 +149,12 @@ function perform(
     const owner = text(input.owner, 100),
       agency = text(input.agency, 50);
     if (
-      !opsDb()
-        .prepare(
-          "SELECT id FROM demo_users WHERE id=? AND verified=1 AND role='client'",
-        )
-        .get(owner)
+      !(await (
+        await db()
+      ).get(
+        "SELECT id FROM demo_users WHERE id=? AND verified=1 AND role='client'",
+        owner,
+      ))
     )
       throw new Error("INVALID_OWNER");
     if (
@@ -160,7 +163,7 @@ function perform(
       !["Brazzaville", "Pointe-Noire"].includes(String(input.destination))
     )
       throw new Error("INVALID_INPUT");
-    return put(actor, "shipment", owner, agency, {
+    return await put(actor, "shipment", owner, agency, {
       service: input.service,
       route: "FR-CG",
       destination: text(input.destination, 100),
@@ -170,7 +173,7 @@ function perform(
     });
   }
   if (command === "receiveParcel") {
-    const shipment = getEntity(actor, text(input.shipmentId, 100));
+    const shipment = await getEntity(actor, text(input.shipmentId, 100));
     if (shipment.kind !== "shipment") throw new Error("INVALID_INPUT");
     const declared = input.declared as ParcelInput,
       controlled = input.controlled as ParcelInput;
@@ -181,7 +184,7 @@ function perform(
       Object.keys(validateParcel(controlled)).length
     )
       throw new Error("INVALID_MEASUREMENTS");
-    const parcel = put(actor, "parcel", shipment.owner, shipment.agency, {
+    const parcel = await put(actor, "parcel", shipment.owner, shipment.agency, {
       reference: "DEMO-P-" + randomBytes(10).toString("hex"),
       shipmentId: shipment.id,
       description: text(input.description),
@@ -192,9 +195,9 @@ function perform(
         JSON.stringify(declared) !== JSON.stringify(controlled),
       priceReviewApproved: false,
     });
-    opsDb()
-      .prepare("INSERT INTO assignments VALUES(?,?)")
-      .run(parcel.id, shipment.id);
+    await (
+      await db()
+    ).run("INSERT INTO assignments VALUES(?,?)", parcel.id, shipment.id);
     return parcel;
   }
   if (command === "newDeparture") {
@@ -204,7 +207,7 @@ function perform(
       !Number.isFinite(Date.parse(String(input.scheduledAt)))
     )
       throw new Error("INVALID_INPUT");
-    return put(actor, "departure", "", text(input.agency, 50), {
+    return await put(actor, "departure", "", text(input.agency, 50), {
       mode: input.mode,
       scheduledAt: new Date(
         /(?:Z|[+-]\d{2}:\d{2})$/.test(String(input.scheduledAt))
@@ -217,8 +220,8 @@ function perform(
     });
   }
   if (command === "assignDeparture") {
-    const departure = getEntity(actor, text(input.departureId, 100)),
-      shipment = getEntity(actor, text(input.shipmentId, 100));
+    const departure = await getEntity(actor, text(input.departureId, 100)),
+      shipment = await getEntity(actor, text(input.shipmentId, 100));
     if (
       departure.kind !== "departure" ||
       shipment.kind !== "shipment" ||
@@ -227,9 +230,11 @@ function perform(
       shipment.payload.departure
     )
       throw new Error("ASSIGNMENT_CONFLICT");
-    const rows = opsDb()
-      .prepare("SELECT payload FROM entities WHERE kind='parcel'")
-      .all() as { payload: string }[];
+    const rows = await (
+      await db()
+    ).all<{ payload: string }>(
+      "SELECT payload FROM entities WHERE kind='parcel'",
+    );
     const parcels = rows
       .map((r) => JSON.parse(r.payload))
       .filter((p) => p.shipmentId === shipment.id);
@@ -238,8 +243,11 @@ function perform(
       parcels.some((p) => p.priceReviewRequired && !p.priceReviewApproved)
     )
       throw new Error("REVIEW_REQUIRED");
-    replace(actor, shipment, { ...shipment.payload, departure: departure.id });
-    replace(actor, departure, {
+    await replace(actor, shipment, {
+      ...shipment.payload,
+      departure: departure.id,
+    });
+    await replace(actor, departure, {
       ...departure.payload,
       shipments: [...(departure.payload.shipments as string[]), shipment.id],
     });
@@ -248,9 +256,9 @@ function perform(
   if (command === "approveMeasures") {
     if (!["admin", "manager"].includes(actor.role))
       throw new Error("ACCESS_DENIED");
-    const parcel = getEntity(actor, text(input.parcelId, 100));
+    const parcel = await getEntity(actor, text(input.parcelId, 100));
     if (parcel.kind !== "parcel") throw new Error("INVALID_INPUT");
-    replace(actor, parcel, {
+    await replace(actor, parcel, {
       ...parcel.payload,
       priceReviewApproved: true,
       approvalReason: text(input.reason),
@@ -259,7 +267,7 @@ function perform(
     return { ok: true };
   }
   if (command === "event") {
-    const shipment = getEntity(actor, text(input.shipmentId, 100)),
+    const shipment = await getEntity(actor, text(input.shipmentId, 100)),
       status = text(input.status, 60);
     if (
       shipment.kind !== "shipment" ||
@@ -268,7 +276,7 @@ function perform(
       throw new Error("INVALID_TRANSITION");
     if (status === "remis" && (!input.proof || !input.entitlementConfirmed))
       throw new Error("WITHDRAWAL_PROOF_REQUIRED");
-    const event = put(actor, "event", shipment.owner, shipment.agency, {
+    const event = await put(actor, "event", shipment.owner, shipment.agency, {
       shipmentId: shipment.id,
       status,
       location: text(input.location, 200),
@@ -280,21 +288,21 @@ function perform(
       corrects: null,
     });
     if (status === "remis")
-      put(actor, "document", shipment.owner, shipment.agency, {
+      await put(actor, "document", shipment.owner, shipment.agency, {
         shipmentId: shipment.id,
         type: "proof-of-handover",
         body: text(input.proof),
         public: false,
       });
-    replace(actor, shipment, { ...shipment.payload, status });
+    await replace(actor, shipment, { ...shipment.payload, status });
     return event;
   }
   if (command === "correctEvent") {
     if (!["admin", "manager"].includes(actor.role))
       throw new Error("ACCESS_DENIED");
-    const original = getEntity(actor, text(input.eventId, 100));
+    const original = await getEntity(actor, text(input.eventId, 100));
     if (original.kind !== "event") throw new Error("INVALID_INPUT");
-    return put(actor, "event", original.owner, original.agency, {
+    return await put(actor, "event", original.owner, original.agency, {
       ...original.payload,
       occurredAt: new Date().toISOString(),
       reason: text(input.reason),
@@ -304,7 +312,7 @@ function perform(
     });
   }
   if (command === "proposal") {
-    const shipment = getEntity(actor, text(input.shipmentId, 100));
+    const shipment = await getEntity(actor, text(input.shipmentId, 100));
     if (
       shipment.kind !== "shipment" ||
       !/^\d{1,12}$/.test(String(input.totalMinor)) ||
@@ -313,11 +321,11 @@ function perform(
       !Number.isFinite(Date.parse(String(input.validUntil)))
     )
       throw new Error("INVALID_INPUT");
-    const previous = listEntities(actor).filter(
+    const previous = (await listEntities(actor)).filter(
       (e) => e.kind === "proposal" && e.payload.shipmentId === shipment.id,
     );
     const version = previous.length + 1;
-    return put(actor, "proposal", shipment.owner, shipment.agency, {
+    return await put(actor, "proposal", shipment.owner, shipment.agency, {
       shipmentId: shipment.id,
       version,
       number: "DEMO-DEV-" + randomBytes(8).toString("hex"),
@@ -330,7 +338,7 @@ function perform(
     });
   }
   if (command === "acceptProposal") {
-    const proposal = getEntity(actor, text(input.proposalId, 100));
+    const proposal = await getEntity(actor, text(input.proposalId, 100));
     if (
       actor.role !== "client" ||
       proposal.owner !== actor.id ||
@@ -339,34 +347,33 @@ function perform(
       Date.parse(String(proposal.payload.validUntil)) < Date.now()
     )
       throw new Error("ACCESS_DENIED");
-    const result = opsDb()
-      .prepare(
-        "UPDATE entities SET payload=?,revision=revision+1 WHERE id=? AND revision=?",
-      )
-      .run(
-        JSON.stringify({
-          ...proposal.payload,
-          status: "acceptee",
-          acceptedAt: new Date().toISOString(),
-        }),
-        proposal.id,
-        proposal.revision,
-      );
+    const result = await (
+      await db()
+    ).run(
+      "UPDATE entities SET payload=?,revision=revision+1 WHERE id=? AND revision=?",
+      JSON.stringify({
+        ...proposal.payload,
+        status: "acceptee",
+        acceptedAt: new Date().toISOString(),
+      }),
+      proposal.id,
+      proposal.revision,
+    );
     if (!result.changes) throw new Error("CONFLICT");
-    audit(actor, "proposal.accepted", proposal.id, {});
+    await audit(actor, "proposal.accepted", proposal.id, {});
     return { ok: true, payment: "non-confirme" };
   }
   if (command === "ticket")
-    return put(actor, "ticket", actor.id, actor.agency, {
+    return await put(actor, "ticket", actor.id, actor.agency, {
       subject: text(input.subject, 160),
       body: text(input.body),
       status: "nouveau",
     });
   if (command === "replyTicket") {
-    const ticket = getEntity(actor, text(input.ticketId, 100));
+    const ticket = await getEntity(actor, text(input.ticketId, 100));
     if (ticket.kind !== "ticket" || !canWrite(actor, "ticket"))
       throw new Error("ACCESS_DENIED");
-    replace(actor, ticket, {
+    await replace(actor, ticket, {
       ...ticket.payload,
       replies: [
         ...((ticket.payload.replies as unknown[]) || []),

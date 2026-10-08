@@ -67,9 +67,12 @@ export default async function Page({
     agency = content.agencies.find((a) => path === "agences/" + a.slug),
     page = content.pages.find((p) => p.slug === path);
   const editorial = !production()
-    ? (db()
-        .prepare("SELECT title,body FROM editorial WHERE slug=?")
-        .get("/" + path) as { title: string; body: string } | undefined)
+    ? await (
+        await db()
+      ).get<{ title: string; body: string }>(
+        "SELECT title,body FROM editorial WHERE slug=?",
+        "/" + path,
+      )
     : undefined;
   return (
     <>

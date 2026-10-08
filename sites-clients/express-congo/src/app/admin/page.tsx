@@ -24,7 +24,7 @@ export default async function Admin() {
     <div className="container section">
       <h1>Gestion éditoriale et demandes</h1>
       <Editor
-        quotes={session ? localQuotes.list() : []}
+        quotes={session ? await localQuotes.list() : []}
         paths={session ? publicPaths.filter((p) => p !== "/") : []}
       />
     </div>
