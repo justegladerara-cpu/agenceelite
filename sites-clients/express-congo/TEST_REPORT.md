@@ -69,3 +69,16 @@ Constat non corrigé : `npx prettier --check .` signale 262 fichiers déjà non 
 | Contrôle de débordement à 390 px | Aucune page publique ni écran de gestion plus large que l’écran                                              |
 
 Nouveau scénario : un client reçoit 403 en tentant de changer l’état d’une demande web, une transition interdite (nouveau → acceptée) renvoie 422, l’administrateur passe la demande en étude, puis l’interface affiche le tableau de bord et la fiche avec l’étape suivante proposée.
+
+## Cloudflare Workers + D1 — 8 octobre 2026
+
+| Commande                                                                  | Résultat exécuté                                                                                                  |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| npm run check                                                             | Types, lint et 24 tests métier réussis (nouveau : 5 soumissions simultanées → une seule demande)                  |
+| CI=1 npx playwright test (Node)                                           | 13 scénarios réussis                                                                                              |
+| npx opennextjs-cloudflare build                                           | Build Cloudflare réussi (Next.js 16.3.8)                                                                          |
+| wrangler dev --local + BASE_URL=http://127.0.0.1:8787 npx playwright test | 13 scénarios réussis dans workerd avec D1 local                                                                   |
+| Requête d’une origine étrangère                                           | 403 confirmé                                                                                                      |
+| Contrôle D1 en ligne                                                      | Comptes attendus : 8 expéditions, 7 colis, 3 départs, 28 événements, 5 propositions, 1 assistance, 4 demandes web |
+
+Non exécuté : déploiement réel sur workers.dev (liaison GitHub à faire par le propriétaire du compte) et tests sur l’URL publique.

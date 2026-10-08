@@ -22,7 +22,8 @@ Node 24 LTS. npm install ; npm run dev ; npm run check ; npm run build ; npm run
 ## Pièges
 
 - APP_ENV vaut demo par défaut, même pour un build Next optimisé. NODE_ENV=production ne signifie pas une publication autorisée.
-- Le stockage SQLite est local et interdit en production. Ne pas le déployer dans des fonctions Netlify.
+- Données : interface `Sql` asynchrone (src/server/database.ts). SQLite en local, D1 en ligne (`DATABASE_DRIVER=d1`). Pas de transaction interactive : utiliser `batch`, contraintes et mises à jour conditionnelles. Toujours `await` les appels, y compris `rateLimit`.
+- Hébergement : Cloudflare Workers via OpenNext (`wrangler.jsonc`). Next.js figé en 16.3.8 tant qu’OpenNext ne gère pas 16.4. Pas de `proxy.ts`/middleware Node.
 - /demo contient le portail et le noyau opérationnel fictifs, avec rôles et permissions. Les comptes et le second facteur sont publics, disponibles uniquement en démo.
 - /admin est un outil de démonstration limité ; ce n’est pas l’administration opérationnelle à rôles du cahier des charges.
 - Les tarifs du PDF sont contradictoires et inactifs. Aucun poids volumétrique par défaut.

@@ -51,6 +51,32 @@ Le script passe par les mêmes API que l’interface : chaque dossier respecte l
 
 Le site client (`/manifest.webmanifest`) et le logiciel de gestion (`/gestion.webmanifest`, ouverture sur `/demo/`) s’installent depuis Chrome ou Edge (« Installer l’application ») sur PC, et depuis le navigateur du téléphone. Aucun service worker : aucune page ni document privé n’est mis en cache hors ligne. En production, le manifeste de gestion devra pointer vers l’administration réelle une fois l’authentification raccordée (EC-025).
 
+## Mise en ligne sur Cloudflare (préproduction de démonstration)
+
+Le site tourne sur Cloudflare Workers via l’adaptateur OpenNext, avec la base **D1** `express-congo-demo` (même SQL que la base locale). Configuration : `wrangler.jsonc` (Worker `express-congo`, liaison `DB`, `APP_ENV=demo`, `DATABASE_DRIVER=d1`) et `open-next.config.ts`.
+
+Liaison GitHub (une seule fois, tableau de bord Cloudflare → Workers & Pages → Créer → Importer un dépôt) :
+
+| Réglage                 | Valeur                                                 |
+| ----------------------- | ------------------------------------------------------ |
+| Dépôt                   | `justegladerara-cpu/agenceelite`, branche `main`       |
+| Nom du projet           | `express-congo` (doit correspondre à `wrangler.jsonc`) |
+| Répertoire racine       | `sites-clients/express-congo`                          |
+| Commande de build       | `npx opennextjs-cloudflare build`                      |
+| Commande de déploiement | `npx opennextjs-cloudflare deploy`                     |
+
+Chaque push sur `main` redéploie ensuite le site. Aucun secret n’est nécessaire : D1 est relié par son identifiant.
+
+Tester localement dans le moteur Cloudflare (workerd + D1 local) :
+
+```bash
+npm run cf:build
+npx wrangler dev --local --var COOKIE_SECURE:false   # http://127.0.0.1:8787
+BASE_URL=http://127.0.0.1:8787 npx playwright test
+```
+
+`COOKIE_SECURE=false` sert uniquement aux aperçus en HTTP ; en ligne (HTTPS) les cookies restent `Secure`.
+
 ## Base PostgreSQL préparée
 
 Docker Compose est un outil de préparation distinct de l’adaptateur SQLite utilisé par l’application locale.

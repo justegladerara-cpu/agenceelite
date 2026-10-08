@@ -30,6 +30,13 @@ Le projet n’est **pas une plateforme de production terminée**. Le site public
 
 Vérification indépendante : check, build, garde-fou production et 12 scénarios navigateur rejoués avec succès. Corrigé : barre finale des URL (anciennes adresses WordPress conservées sans redirection, un seul saut pour l’article de mesures) ; horaires publiés et page Facebook ajoutés en OBSERVÉ, masqués en production. Formatage Prettier global non conforme (262 fichiers) déjà présent, non traité.
 
+## Mise en ligne Cloudflare (Claude, 8 octobre 2026)
+
+- Base D1 `express-congo-demo` créée, schéma appliqué, jeu de démonstration chargé (8 expéditions, 7 colis, 3 départs, 28 événements, 5 propositions, 4 demandes web).
+- Code compatible Cloudflare Workers (OpenNext) et toujours compatible Node : 24 tests métier, 13 scénarios navigateur réussis sur les deux moteurs.
+- **Reste à faire par le propriétaire du compte** : relier le dépôt GitHub au projet Workers `express-congo` (voir README, « Mise en ligne sur Cloudflare »). Cet environnement n’a pas accès réseau à l’API Cloudflare et le connecteur ne déploie pas de code.
+- Next.js figé en 16.3.8 (voir DECISIONS). Ne pas mettre à jour sans vérifier le build OpenNext.
+
 ## Refonte visuelle et logiciel de gestion (Claude, 8 octobre 2026)
 
 - Site public : nouveau système visuel, accueil avec tracé France → Congo et accès directs (devis, volume, agence), numéros formatés, étapes de devis lisibles.
