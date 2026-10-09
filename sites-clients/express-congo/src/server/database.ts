@@ -26,6 +26,7 @@ export const schema = [
   "CREATE TABLE IF NOT EXISTS auth_tokens (hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES demo_users(id), purpose TEXT NOT NULL, expires_at INTEGER NOT NULL)",
   "CREATE TABLE IF NOT EXISTS assignments (parcel_id TEXT PRIMARY KEY REFERENCES entities(id), shipment_id TEXT NOT NULL REFERENCES entities(id))",
   "CREATE INDEX IF NOT EXISTS entities_kind ON entities(kind, created_at)",
+  "CREATE TABLE IF NOT EXISTS account_status (user_id TEXT PRIMARY KEY REFERENCES demo_users(id), disabled INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL, updated_by TEXT NOT NULL)",
   "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL, updated_by TEXT NOT NULL)",
 ];
 

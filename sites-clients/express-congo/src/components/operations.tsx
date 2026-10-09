@@ -31,7 +31,7 @@ import type {
   Provider,
 } from "@/server/payments";
 
-type Accounts = typeof demoAccounts;
+type Accounts = readonly (typeof demoAccounts)[number][];
 const errors: Record<string, string> = {
   ACCESS_DENIED: "Votre rôle ne permet pas cette opération.",
   INVALID_TRANSITION:
@@ -386,7 +386,8 @@ function SimulatedMail({ mail }: { mail: Mailbox }) {
   );
 }
 function Login({ accounts, code }: { accounts: Accounts; code: string }) {
-  const [mode, setMode] = useState<Mode>("demo"),
+  const demoOpen = accounts.length > 0;
+  const [mode, setMode] = useState<Mode>(demoOpen ? "demo" : "account"),
     [email, setEmail] = useState("client-a@example.invalid"),
     [ownEmail, setOwnEmail] = useState(""),
     [password, setPassword] = useState(""),
@@ -403,9 +404,28 @@ function Login({ accounts, code }: { accounts: Accounts; code: string }) {
   useEffect(() => {
     const q = new URLSearchParams(location.search);
     const verify = q.get("verifier"),
-      reset = q.get("reinitialiser");
-    if (!verify && !reset) return;
+      reset = q.get("reinitialiser"),
+      sso = q.get("sso");
+    if (!verify && !reset && !sso) return;
     history.replaceState(null, "", "/demo/");
+    // Ouverture depuis la plateforme Agence Élite (lien valable 60 secondes).
+    if (sso) {
+      fetch("/api/demo/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sso }),
+      }).then(async (r) => {
+        if (r.ok) location.reload();
+        else {
+          setMode("account");
+          setMessage({
+            text: "Ce lien d’accès a expiré ou a déjà servi. Rouvrez la gestion depuis la plateforme.",
+            ok: false,
+          });
+        }
+      });
+      return;
+    }
     // Mise à jour différée d’un tour : l’URL n’est lisible qu’après hydratation.
     if (reset) {
       void Promise.resolve().then(() => {
@@ -497,10 +517,12 @@ function Login({ accounts, code }: { accounts: Accounts; code: string }) {
             <li>Mesures contrôlées et historique conservé</li>
           </ul>
         </div>
-        <span className="demo-flag">Démonstration — dossiers fictifs</span>
+        {demoOpen && (
+          <span className="demo-flag">Démonstration — dossiers fictifs</span>
+        )}
       </aside>
       <div className="login-panel">
-        {(mode === "demo" || mode === "account") && (
+        {demoOpen && (mode === "demo" || mode === "account") && (
           <div className="segmented" role="tablist" aria-label="Type d’accès">
             {(
               [

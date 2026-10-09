@@ -5,6 +5,7 @@ import {
   demoAccounts,
   demoMfa,
   people,
+  accessSettings,
 } from "@/server/demo-auth";
 import { listEntities } from "@/server/operations-repository";
 import { Operations } from "@/components/operations";
@@ -38,6 +39,7 @@ export default async function Demo() {
       )
     : [];
   const settings = actor ? await getPaymentSettings() : null;
+  const demoPublic = (await accessSettings()).demoPublic;
   const hub =
     actor && settings && ["admin", "finance"].includes(actor.role)
       ? { settings, providers: onlineProviders() }
@@ -46,13 +48,13 @@ export default async function Demo() {
     <Operations
       actor={actor}
       entities={entities}
-      accounts={demoAccounts}
+      accounts={demoPublic ? demoAccounts : []}
       people={await people(actor)}
       payInstructions={
         settings ? instructionsFor(settings, (a) => agencies[a] || a) : []
       }
       hub={hub}
-      code={demoMfa()}
+      code={demoPublic ? demoMfa() : ""}
       quotes={actor ? await visibleQuotes(actor) : []}
       audit={actor ? await recentAudit(actor) : []}
     />

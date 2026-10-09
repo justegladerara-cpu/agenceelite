@@ -63,7 +63,9 @@ Le site client (`/manifest.webmanifest`) et le logiciel de gestion (`/gestion.we
 
 Le site tourne sur Cloudflare Workers via l’adaptateur OpenNext, avec la base **D1** `express-congo-demo` (même SQL que la base locale). Configuration : `wrangler.jsonc` (Worker `express-congo`, liaison `DB`, `APP_ENV=demo`, `DATABASE_DRIVER=d1`) et `open-next.config.ts`.
 
-Liaison GitHub (une seule fois, tableau de bord Cloudflare → Workers & Pages → Créer → Importer un dépôt) :
+**Mettre en ligne (une seule fois, au choix)** — l’adresse sera `https://express-congo.justegladerara.workers.dev`, celle qu’attend la plateforme Agence Élite.
+
+_Option A — relier le dépôt dans Cloudflare (recommandé, aucun jeton)_ : tableau de bord Cloudflare → Workers & Pages → Créer → Importer un dépôt Git :
 
 | Réglage                 | Valeur                                                 |
 | ----------------------- | ------------------------------------------------------ |
@@ -73,7 +75,13 @@ Liaison GitHub (une seule fois, tableau de bord Cloudflare → Workers & Pages �
 | Commande de build       | `npx opennextjs-cloudflare build`                      |
 | Commande de déploiement | `npx opennextjs-cloudflare deploy`                     |
 
-Chaque push sur `main` redéploie ensuite le site. Aucun secret n’est nécessaire : D1 est relié par son identifiant.
+_Option B — publication par GitHub Actions_ : créer un jeton Cloudflare (modèle « Modifier les Workers Cloudflare ») et l’ajouter dans GitHub → Settings → Secrets → Actions, environnement `production`, sous le nom `CLOUDFLARE_API_TOKEN` (et `CLOUDFLARE_ACCOUNT_ID` si le compte en a plusieurs). Le job `deploy` de `.github/workflows/express-congo.yml` publie alors après chaque vérification verte sur `main`.
+
+Ensuite chaque push sur `main` redéploie le site. Aucun autre secret : D1 est relié par son identifiant, et la vérification Super Admin utilise l’URL et la clé publique de la plateforme (`wrangler.jsonc`).
+
+## Administration depuis la plateforme Agence Élite
+
+Le Super Admin de la plateforme gère le site depuis **Sites clients → Express Congo** : comptes et rôles (création par lien d’activation de 72 h, changement de rôle, désactivation immédiate, lien de nouveau mot de passe, fermeture des sessions), démo publique ouverte ou fermée, journal, et « Ouvrir la gestion » (connexion administrateur par lien de 60 s). API : `/api/plateforme/{etat,comptes,journal,acces,session}/` (`src/server/platform.ts`). Le jeton de session reçu est vérifié par la fonction `est_super_admin()` de la plateforme ; seules les origines de la plateforme sont acceptées (CORS). **Pensez à fermer la démo publique** dès que de vrais utilisateurs travaillent sur le site.
 
 Tester localement dans le moteur Cloudflare (workerd + D1 local) :
 

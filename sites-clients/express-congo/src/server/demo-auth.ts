@@ -91,20 +91,35 @@ export function demoMfa() {
     .toString()
     .padStart(6, "0");
 }
-export async function signIn(email: string, password: string, code: string) {
-  await seedAccounts();
+/* ---------- Accès gérés depuis la plateforme Agence Élite ---------- */
+export type AccessSettings = { demoPublic: boolean };
+/** Comptes de démonstration publics ouverts par défaut ; la plateforme peut les fermer. */
+export async function accessSettings(): Promise<AccessSettings> {
   const row = await (
     await db()
-  ).get<User>("SELECT * FROM demo_users WHERE email=?", email.toLowerCase());
-  const derived = scryptSync(password, row?.salt || "missing-user", 64),
-    expected = row ? Buffer.from(row.password_hash, "hex") : Buffer.alloc(64);
-  if (
-    !row ||
-    !row.verified ||
-    !timingSafeEqual(derived, expected) ||
-    (row.role === "admin" && code !== demoMfa())
-  )
-    throw new Error("ACCESS_DENIED");
+  ).get<{ value: string }>("SELECT value FROM settings WHERE key='access'");
+  const v = row ? (JSON.parse(row.value) as Partial<AccessSettings>) : {};
+  return { demoPublic: v.demoPublic !== false };
+}
+/** Compte désactivé, ou compte public de démonstration alors que la démo publique est fermée. */
+async function blocked(userId: string) {
+  const row = await (
+    await db()
+  ).get<{ disabled: number }>(
+    "SELECT disabled FROM account_status WHERE user_id=?",
+    userId,
+  );
+  if (row?.disabled) return true;
+  return publicDemoIds.has(userId) && !(await accessSettings()).demoPublic;
+}
+const publicDemoIds = new Set<string>(demoAccounts.map((a) => a.id));
+
+async function openSession(row: {
+  id: string;
+  role: Role;
+  agency: string;
+  organization: string | null;
+}) {
   const token = randomBytes(32).toString("hex");
   await (
     await db()
@@ -128,6 +143,39 @@ export async function signIn(email: string, password: string, code: string) {
     organization: row.organization,
   };
 }
+
+/** Ouverture de session à usage unique, créée depuis la plateforme (60 s). */
+export async function ssoSignIn(code: string) {
+  if (!isDemo()) throw new Error("DEMO_DISABLED");
+  const id = await consumeToken(code, "sso");
+  if (!id || (await blocked(id))) throw new Error("ACCESS_DENIED");
+  const row = await (
+    await db()
+  ).get<User>("SELECT * FROM demo_users WHERE id=? AND verified=1", id);
+  if (!row) throw new Error("ACCESS_DENIED");
+  return openSession(row);
+}
+
+export async function signIn(email: string, password: string, code: string) {
+  await seedAccounts();
+  const row = await (
+    await db()
+  ).get<User>("SELECT * FROM demo_users WHERE email=?", email.toLowerCase());
+  const derived = scryptSync(password, row?.salt || "missing-user", 64),
+    expected = row ? Buffer.from(row.password_hash, "hex") : Buffer.alloc(64);
+  if (
+    !row ||
+    !row.verified ||
+    // Empreinte de taille inattendue : refus propre, jamais d’erreur serveur.
+    derived.length !== expected.length ||
+    !timingSafeEqual(derived, expected) ||
+    // Le code simulé ne vaut que pour les comptes publics de démonstration.
+    (row.role === "admin" && publicDemoIds.has(row.id) && code !== demoMfa()) ||
+    (await blocked(row.id))
+  )
+    throw new Error("ACCESS_DENIED");
+  return openSession(row);
+}
 export async function currentActor(): Promise<Actor | null> {
   if (!isDemo()) return null;
   const token = (await cookies()).get("ec-demo-user")?.value;
@@ -139,7 +187,8 @@ export async function currentActor(): Promise<Actor | null> {
     hash(token),
     Date.now(),
   );
-  return row ? { ...row } : null;
+  // Un compte désactivé depuis la plateforme perd l’accès immédiatement.
+  return row && !(await blocked(row.id)) ? { ...row } : null;
 }
 export async function signOut() {
   const jar = await cookies(),
@@ -176,9 +225,16 @@ export function passwordProblem(password: string) {
   return null;
 }
 
-async function issueToken(userId: string, purpose: "verify" | "reset") {
+type Purpose = "verify" | "reset" | "activate" | "sso";
+const TTL: Record<Purpose, number> = {
+  verify: 24 * 3600000,
+  reset: 3600000,
+  activate: 72 * 3600000,
+  sso: 60000,
+};
+export async function issueToken(userId: string, purpose: Purpose) {
   const token = randomBytes(32).toString("hex");
-  const ttl = purpose === "verify" ? 24 * 3600000 : 3600000;
+  const ttl = TTL[purpose];
   await (
     await db()
   ).batch([
@@ -195,7 +251,7 @@ async function issueToken(userId: string, purpose: "verify" | "reset") {
   return token;
 }
 
-async function consumeToken(token: string, purpose: "verify" | "reset") {
+async function consumeToken(token: string, purpose: Purpose) {
   if (!/^[a-f0-9]{64}$/.test(token)) return undefined;
   const row = await (
     await db()
@@ -315,14 +371,17 @@ export async function resetPassword(token: string, password: string) {
   if (!isDemo()) throw new Error("DEMO_DISABLED");
   const problem = passwordProblem(password);
   if (problem) throw new Error(problem);
-  const id = await consumeToken(token, "reset");
+  // Lien « mot de passe oublié » ou lien d’activation créé par la plateforme.
+  const id =
+    (await consumeToken(token, "reset")) ??
+    (await consumeToken(token, "activate"));
   if (!id || reserved.has(id)) throw new Error("INVALID_TOKEN");
   const salt = randomBytes(16).toString("hex");
   await (
     await db()
   ).batch([
     [
-      "UPDATE demo_users SET password_hash=?,salt=? WHERE id=?",
+      "UPDATE demo_users SET password_hash=?,salt=?,verified=1 WHERE id=?",
       [scryptSync(password, salt, 64).toString("hex"), salt, id],
     ],
     // Toutes les sessions ouvertes sont fermées après un changement.

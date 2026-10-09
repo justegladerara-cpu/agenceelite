@@ -74,9 +74,17 @@ Reste hors de portée sans prestataire : envoi réel des emails, MFA de producti
 
 Vérifié : 31 tests métier, 15 scénarios navigateur, build Next et OpenNext, Worker local (hub 200, transfert 201, PDF 200), parcours de toutes les pages et vues de gestion sans erreur console.
 
+## Rattachement à la plateforme Agence Élite (Claude, 9 octobre 2026, soir)
+
+- **Administration par le Super Admin de la plateforme** (dépôt `agence-elite-platform`, menu « Sites clients ») via `/api/plateforme/*` : état, comptes (création par lien d’activation 72 h, rôle, désactivation, lien de mot de passe, fermeture des sessions), démo publique, journal, ouverture de session à usage unique (60 s) sur un compte administrateur personnel `plateforme-<id>`.
+- Sécurité : origine contrôlée (CORS), jeton de session vérifié par `est_super_admin()` de la plateforme avec sa clé publishable ; aucun secret partagé. Toutes les actions sont journalisées avec l’acteur `plateforme:<email>`.
+- Nouveau : table `account_status` (désactivation), réglage `access` (démo publique), jetons `activate` et `sso`. Un compte désactivé, ou un compte public de démo quand la démo est fermée, est refusé à la connexion **et** perd sa session en cours.
+- Corrigé : une empreinte de mot de passe de taille inattendue provoquait une erreur serveur au lieu d’un refus.
+- **Pas encore en ligne** : le Worker `express-congo` n’existe pas encore dans le compte Cloudflare (vérifié par le connecteur, seule la base D1 existe). Mise en ligne : README, « Mettre en ligne » (option A ou B).
+
 ## Dernières vérifications
 
-`npm run check` : types, lint et **31 tests métier/intégration locaux réussis**. `npm run test:e2e` : build optimisé de démonstration et **15 scénarios navigateur réussis**, dont réception → départ → remise, accès inter-clients/inter-agences, PDF, QR et manifeste. Voir TEST_REPORT.md pour les commandes, corrections et limites.
+`npm run check` : types, lint et **34 tests métier/intégration locaux réussis**. `npm run test:e2e` : build optimisé de démonstration et **15 scénarios navigateur réussis**, dont réception → départ → remise, accès inter-clients/inter-agences, PDF, QR et manifeste. Voir TEST_REPORT.md pour les commandes, corrections et limites.
 
 ## Prochaines étapes ordonnées
 

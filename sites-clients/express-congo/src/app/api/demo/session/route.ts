@@ -8,16 +8,21 @@ import {
   signIn,
   signOut,
   currentActor,
+  ssoSignIn,
+  accessSettings,
 } from "@/server/demo-auth";
 export async function GET() {
   if (!isDemo()) return new Response(null, { status: 404 });
+  // Démo publique fermée depuis la plateforme : aucun identifiant n’est exposé.
+  const open = (await accessSettings()).demoPublic;
   return NextResponse.json(
     {
       actor: await currentActor(),
-      accounts: demoAccounts,
-      secondStep: demoMfa(),
-      password: "DemoExpress!2026",
+      accounts: open ? demoAccounts : [],
+      secondStep: open ? demoMfa() : null,
+      password: open ? "DemoExpress!2026" : null,
       mode: "demo",
+      demoPublic: open,
     },
     { headers: { "Cache-Control": "no-store" } },
   );
@@ -28,6 +33,16 @@ export async function POST(request: Request) {
   if (!(await rateLimit("demo-signin", 100, 600)))
     return new Response(null, { status: 429 });
   const input = await request.json().catch(() => ({}));
+  // Lien à usage unique ouvert depuis la plateforme Agence Élite.
+  if (typeof input.sso === "string")
+    try {
+      return NextResponse.json({ actor: await ssoSignIn(input.sso) });
+    } catch {
+      return NextResponse.json(
+        { message: "Lien expiré ou déjà utilisé." },
+        { status: 401 },
+      );
+    }
   if (
     typeof input.email !== "string" ||
     typeof input.password !== "string" ||
