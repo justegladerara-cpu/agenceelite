@@ -19,10 +19,24 @@ export default function Home() {
               <Link className="button" href="/devis">
                 Demander un devis
               </Link>
-              <Link className="plain-link" href="/services">
-                Voir nos solutions
+              <Link className="plain-link" href="/suivi">
+                Suivre un envoi →
               </Link>
             </div>
+            <ul className="hero-facts" aria-label="En bref">
+              <li>
+                <b>Devis gratuit</b>
+                <span>Proposition écrite et détaillée</span>
+              </li>
+              <li>
+                <b>3 solutions</b>
+                <span>Aérien, groupage maritime, conteneur</span>
+              </li>
+              <li>
+                <b>3 agences</b>
+                <span>Paris, Brazzaville, Pointe-Noire</span>
+              </li>
+            </ul>
           </div>
           <RouteMap />
         </div>
@@ -32,6 +46,10 @@ export default function Home() {
           <Link className="quick-main" href="/devis">
             <strong>Demander un devis</strong>
             <span>En 5 étapes, sans créer de compte.</span>
+          </Link>
+          <Link href="/suivi">
+            <strong>Suivre mon envoi</strong>
+            <span>Avec la référence et le code de suivi.</span>
           </Link>
           <Link href="/prendre-les-mesures">
             <strong>Calculer mon volume</strong>

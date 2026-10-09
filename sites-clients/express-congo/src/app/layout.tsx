@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Header, Footer } from "@/components/shell";
 import { production, siteUrl } from "@/config";
 import "./globals.css";
+import "./premium.css";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
   title: {

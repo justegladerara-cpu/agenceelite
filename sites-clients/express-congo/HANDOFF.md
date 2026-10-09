@@ -1,4 +1,4 @@
-# Passation — état réel au 8 octobre 2026
+# Passation — état réel au 9 octobre 2026
 
 Le projet n’est **pas une plateforme de production terminée**. Le site public et un noyau opérationnel fonctionnent localement en démonstration. Aucun domaine, WordPress, compte prestataire ou hébergement public n’a été modifié. Cette livraison s’arrête à un état testable pour la reprise demandée au §19 ; ne pas confondre démonstration et raccordement de production.
 
@@ -45,15 +45,31 @@ Vérification indépendante : check, build, garde-fou production et 12 scénario
 - `npm run demo:dataset` remplit la démonstration via les vraies API.
 - Reste partiel : la gestion utilise toujours les comptes et le stockage de démonstration ; production bloquée jusqu’à EC-025. Pas de paiement, pas de notifications réelles.
 
+## Finalisation et montée en gamme (Claude, 9 octobre 2026)
+
+Nouvelles fonctions, toutes en démonstration (aucun prestataire externe raccordé) :
+
+- **Comptes clients** : inscription (`/demo`, onglet « Mon compte »), confirmation de l’adresse par lien à usage unique (24 h), connexion, mot de passe oublié (lien 1 h, ancien lien révoqué, sessions fermées après changement). Jetons aléatoires stockés hachés (`auth_tokens`). **Aucun email n’est envoyé** : le message est affiché à l’écran dans un encadré « Simulation ». Les comptes publics de démonstration ne sont pas réinitialisables. Les nouveaux clients apparaissent dans la gestion dès confirmation (`people()` remplace la liste figée).
+- **Suivi public** `/suivi` : référence + code de suivi à 8 caractères dérivé par HMAC (`TRACKING_SECRET`), rien à stocker. Réponse sans donnée personnelle (ni client, ni commentaire interne, ni preuve), événement corrigé remplacé par sa correction, plafond global et par référence. Code visible et copiable dans la fiche d’expédition, lien de suivi prérempli. Désactivé en production.
+- **Propositions détaillées** : lignes libellé / quantité / prix unitaire, total calculé côté serveur en unités mineures entières (`src/domain/proposals.ts`) ; le total saisi est ignoré quand des lignes sont fournies. Fiche et PDF affichent le détail.
+- **Départs** : confirmation de la date (`confirmDeparture`) ; affectation groupée depuis la fiche du départ avec compte rendu par expédition (refus expliqués).
+- **Transfert d’agence** (`transferShipment`, responsable ou administrateur) : dossier, colis, événements et documents changent d’agence ; refusé si l’expédition est partie et pas encore arrivée, close, ou déjà dans l’agence. Historique des transferts dans la fiche.
+- **Contenus** : coordonnées, horaires, à-propos, mentions légales et résumé des CGV (TLF 2017) repris du site officiel expresscongo.fr le 9 octobre 2026. Les crochets « [À CONFIRMER] » sont remplacés par une mention de source discrète ; le contenu reste `PROPOSÉ` et la production reste bloquée (EC-026).
+- **Design** : couche `src/app/premium.css` chargée après `globals.css` (profondeur du premier écran, chiffres clés factuels, accès « Suivre mon envoi », cartes et étapes animées, page contact en tuiles, pied de page avec contacts, connexion de la gestion repensée, cartes de suivi, éditeur de lignes). Même identité : bleu nuit, rouge pour les actions, Archivo + Inter.
+
+Vérifié : `npm run check` (29 tests), `npm run build`, `npm run cf:build`, 14 scénarios navigateur, et essai local du Worker (`wrangler dev`, D1) : inscription, confirmation, suivi et proposition.
+
+Reste hors de portée sans prestataire : envoi réel des emails, MFA de production, paiement, notifications, analyse antivirus des pièces, base et authentification de production (EC-022, EC-025, EC-027). Workflow éditorial d’approbation non modifié.
+
 ## Dernières vérifications
 
-`npm run check` : types, lint et **23 tests métier/intégration locaux réussis**. `npm run test:e2e` : build optimisé de démonstration et **12 scénarios navigateur réussis**, dont réception → départ → remise, accès inter-clients/inter-agences, PDF, QR et manifeste. Voir TEST_REPORT.md pour les commandes, corrections et limites.
+`npm run check` : types, lint et **29 tests métier/intégration locaux réussis**. `npm run test:e2e` : build optimisé de démonstration et **14 scénarios navigateur réussis**, dont réception → départ → remise, accès inter-clients/inter-agences, PDF, QR et manifeste. Voir TEST_REPORT.md pour les commandes, corrections et limites.
 
 ## Prochaines étapes ordonnées
 
 1. EC-025 : repositories PostgreSQL/Supabase, Auth éprouvée avec MFA réelle, stockage privé, migrations et politiques RLS ; tester sur base locale Docker. Ne pas ouvrir RLS globalement.
 2. Compléter lot 1 : workflow éditorial approuvé et versions archivées, validation du contenu EC-026, document tarifaire versionné après EC-012, inventaire des redirections EC-028.
-3. Compléter lot 2 : inscription/vérification/récupération, rattachement invité par preuve, organisations et habilitations, propositions détaillées, contrôle de toutes les dimensions dans l’UI, gestion des départs groupés/transferts, suivi public limité et OTP, libération documentaire après analyse EC-027.
+3. Compléter lot 2 : rattachement invité par preuve, organisations et habilitations, envoi réel des emails d’inscription/récupération (EC-022), libération documentaire après analyse EC-027. Inscription, suivi public limité, propositions détaillées, départs groupés et transferts sont réalisés en démonstration (9 octobre 2026).
 4. Rejouer les tests du lot 2 et ajouter les scénarios manquants. Ensuite seulement : lot 3, interfaces/adaptateurs démo, notifications anti-doublons/reprise, webhooks de paiement authentifiés et idempotents, imports et rendez-vous.
 5. Préproduction hébergée uniquement après validation du stockage et autorisation applicable. Publication publique hors mission.
 

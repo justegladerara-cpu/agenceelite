@@ -5,8 +5,18 @@ export default defineConfig({
   use: {
     baseURL: process.env.BASE_URL || "http://127.0.0.1:3000",
     browserName: "chromium",
-    channel: (process.env.PLAYWRIGHT_CHANNEL || "chrome") as
-      "chrome" | "msedge",
+    // PLAYWRIGHT_EXECUTABLE : chemin d’un Chromium déjà présent (machine sans Chrome).
+    ...(process.env.PLAYWRIGHT_EXECUTABLE
+      ? {
+          launchOptions: {
+            executablePath: process.env.PLAYWRIGHT_EXECUTABLE,
+            args: ["--no-sandbox", "--no-zygote"],
+          },
+        }
+      : {
+          channel: (process.env.PLAYWRIGHT_CHANNEL || "chrome") as
+            "chrome" | "msedge",
+        }),
   },
   // BASE_URL permet de viser un autre serveur (ex. aperçu Cloudflare local).
   webServer: process.env.BASE_URL

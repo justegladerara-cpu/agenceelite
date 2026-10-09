@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import type { Actor, Entity } from "@/domain/operations";
 import { shipmentStates } from "@/domain/operations";
-import type { demoAccounts } from "@/server/demo-auth";
+import type { demoAccounts, Person, Mailbox } from "@/server/demo-auth";
 import type { QuoteView, AuditView } from "@/server/backoffice";
 import {
   states,
@@ -38,6 +38,12 @@ const errors: Record<string, string> = {
   INVALID_MEASUREMENTS: "Vérifiez les dimensions et les poids saisis.",
   INVALID_INPUT: "Vérifiez les valeurs saisies.",
   INVALID_OWNER: "Choisissez un client vérifié.",
+  INVALID_LINES:
+    "Vérifiez chaque ligne : libellé, quantité entière et prix unitaire.",
+  TRANSFER_REFUSED:
+    "Transfert impossible : même agence, dossier clos, ou expédition déjà partie et pas encore arrivée.",
+  CONFLICT:
+    "Le dossier a été modifié entre-temps. Rechargez la page puis recommencez.",
 };
 
 function Pill({ value }: { value: unknown }) {
@@ -70,6 +76,9 @@ const pick = (name: string, label: string, items: Entity[]): Field => ({
     label: [
       shortRef(i.payload.reference || i.payload.number || i.payload.subject),
       services[String(i.payload.service || i.payload.mode)] || "",
+      i.kind === "departure"
+        ? `${agencies[i.agency]} · ${date(i.payload.confirmedAt || i.payload.scheduledAt, i.agency)}`
+        : "",
       i.payload.status ? stateLabel(i.payload.status) : "",
     ]
       .filter(Boolean)
@@ -85,6 +94,119 @@ function groups(fields: Field[]) {
   }
   return out;
 }
+/* Lignes de proposition : libellé, quantité, prix unitaire, total calculé. */
+type Line = { label: string; quantity: string; unit: string };
+const blankLine = (): Line => ({ label: "", quantity: "1", unit: "" });
+function LinesField({ id }: { id: string }) {
+  const [currency, setCurrency] = useState("EUR"),
+    [lines, setLines] = useState<Line[]>([
+      { label: "Transport France → Congo", quantity: "1", unit: "" },
+    ]);
+  const places = currency === "EUR" ? 2 : 0;
+  const minor = (v: string) => {
+    const t = v.trim().replace(/\s/g, "");
+    const ok = places === 0 ? /^\d{1,12}$/ : /^\d{1,10}([.,]\d{1,2})?$/;
+    if (!ok.test(t)) return null;
+    const [w, f = ""] = t.split(/[.,]/);
+    return Number(w + f.padEnd(places, "0"));
+  };
+  const lineTotal = (l: Line) => {
+    const u = minor(l.unit),
+      q = Number(l.quantity);
+    return u !== null && Number.isInteger(q) && q > 0 ? u * q : null;
+  };
+  const total = lines.reduce((s, l) => s + (lineTotal(l) ?? 0), 0);
+  const set = (i: number, patch: Partial<Line>) =>
+    setLines(lines.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  return (
+    <fieldset className="lines-field" id={id}>
+      <legend>Détail chiffré</legend>
+      <input type="hidden" name="currency" value={currency} />
+      <input type="hidden" name="lines" value={JSON.stringify(lines)} />
+      <div className="lines-head">
+        <label>
+          Devise
+          <select
+            aria-label="Devise"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+          >
+            <option value="EUR">Euro (EUR)</option>
+            <option value="XAF">Franc CFA (XAF)</option>
+          </select>
+        </label>
+        <p className="hint">
+          {places
+            ? "Prix unitaires en euros, centimes après la virgule (125,50)."
+            : "Prix unitaires en francs CFA, sans décimale (15000)."}
+        </p>
+      </div>
+      <div className="lines-table" role="table" aria-label="Lignes">
+        <div className="lines-row lines-row-head" role="row">
+          <span role="columnheader">Prestation</span>
+          <span role="columnheader">Qté</span>
+          <span role="columnheader">Prix unitaire</span>
+          <span role="columnheader">Total</span>
+          <span />
+        </div>
+        {lines.map((l, i) => {
+          const t = lineTotal(l);
+          return (
+            <div className="lines-row" role="row" key={i}>
+              <input
+                aria-label={`Prestation ${i + 1}`}
+                value={l.label}
+                maxLength={160}
+                required
+                onChange={(e) => set(i, { label: e.target.value })}
+              />
+              <input
+                aria-label={`Quantité ${i + 1}`}
+                value={l.quantity}
+                inputMode="numeric"
+                required
+                onChange={(e) => set(i, { quantity: e.target.value })}
+              />
+              <input
+                aria-label={`Prix unitaire ${i + 1}`}
+                value={l.unit}
+                inputMode="decimal"
+                required
+                onChange={(e) => set(i, { unit: e.target.value })}
+              />
+              <output className={t === null && l.unit ? "bad" : ""}>
+                {t === null ? (l.unit ? "Invalide" : "—") : money(t, currency)}
+              </output>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label={`Retirer la ligne ${i + 1}`}
+                disabled={lines.length === 1}
+                onClick={() => setLines(lines.filter((_, j) => j !== i))}
+              >
+                ×
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <div className="lines-foot">
+        <button
+          type="button"
+          className="text-button"
+          disabled={lines.length >= 20}
+          onClick={() => setLines([...lines, blankLine()])}
+        >
+          + Ajouter une ligne
+        </button>
+        <p className="lines-total">
+          Total <b>{money(total, currency)}</b>
+        </p>
+      </div>
+    </fieldset>
+  );
+}
+
 function TaskForm({
   task,
   preset,
@@ -97,34 +219,37 @@ function TaskForm({
   close: () => void;
 }) {
   const [busy, setBusy] = useState(false);
-  const renderField = (f: Field) => (
-    <label key={f.name} htmlFor={`${task.key}-${f.name}`}>
-      {f.label}
-      {f.optional ? " (facultatif)" : ""}
-      {f.options ? (
-        <select
-          id={`${task.key}-${f.name}`}
-          name={f.name}
-          defaultValue={preset[f.name] ?? f.value}
-        >
-          {f.options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input
-          id={`${task.key}-${f.name}`}
-          name={f.name}
-          type={!f.type || f.type === "decimal" ? "text" : f.type}
-          defaultValue={preset[f.name] ?? f.value}
-          inputMode={f.type === "decimal" ? "decimal" : undefined}
-          required={!f.optional}
-        />
-      )}
-    </label>
-  );
+  const renderField = (f: Field) =>
+    f.type === "lines" ? (
+      <LinesField key={f.name} id={`${task.key}-${f.name}`} />
+    ) : (
+      <label key={f.name} htmlFor={`${task.key}-${f.name}`}>
+        {f.label}
+        {f.optional ? " (facultatif)" : ""}
+        {f.options ? (
+          <select
+            id={`${task.key}-${f.name}`}
+            name={f.name}
+            defaultValue={preset[f.name] ?? f.value}
+          >
+            {f.options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            id={`${task.key}-${f.name}`}
+            name={f.name}
+            type={!f.type || f.type === "decimal" ? "text" : f.type}
+            defaultValue={preset[f.name] ?? f.value}
+            inputMode={f.type === "decimal" ? "decimal" : undefined}
+            required={!f.optional}
+          />
+        )}
+      </label>
+    );
   return (
     <form
       className="task-panel"
@@ -143,7 +268,9 @@ function TaskForm({
       <h2 id={"task-" + task.key}>{task.title}</h2>
       <p className="hint">{task.hint}</p>
       {groups(task.fields).map(([group, fields]) =>
-        group ? (
+        fields[0].type === "lines" ? (
+          renderField(fields[0])
+        ) : group ? (
           <fieldset className="measure-group" key={group}>
             <legend>{group}</legend>
             <div className="fields four">{fields.map(renderField)}</div>
@@ -166,12 +293,131 @@ function TaskForm({
   );
 }
 
-/* ---------- Connexion ---------- */
+/* ---------- Connexion et comptes ---------- */
+type Mode = "demo" | "account" | "register" | "forgot" | "reset";
+async function accountCall(body: Record<string, string>) {
+  const r = await fetch("/api/demo/account", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = (await r.json().catch(() => ({}))) as {
+    message?: string;
+    mailbox?: Mailbox | null;
+  };
+  return { ok: r.ok, ...data };
+}
+function SimulatedMail({ mail }: { mail: Mailbox }) {
+  return (
+    <div className="mail-sim" role="status">
+      <p className="mail-sim-flag">
+        Simulation — aucun email n’est envoyé en démonstration
+      </p>
+      <dl>
+        <div>
+          <dt>À</dt>
+          <dd>{mail.to}</dd>
+        </div>
+        <div>
+          <dt>Objet</dt>
+          <dd>{mail.subject}</dd>
+        </div>
+      </dl>
+      <p>{mail.body}</p>
+      <a className="button small" href={mail.link}>
+        Ouvrir le lien du message
+      </a>
+    </div>
+  );
+}
 function Login({ accounts, code }: { accounts: Accounts; code: string }) {
-  const [email, setEmail] = useState("client-a@example.invalid"),
+  const [mode, setMode] = useState<Mode>("demo"),
+    [email, setEmail] = useState("client-a@example.invalid"),
+    [ownEmail, setOwnEmail] = useState(""),
     [password, setPassword] = useState(""),
     [factor, setFactor] = useState(""),
-    [message, setMessage] = useState("");
+    [agency, setAgency] = useState("paris"),
+    [token, setToken] = useState(""),
+    [busy, setBusy] = useState(false),
+    [message, setMessage] = useState<{ text: string; ok: boolean } | null>(
+      null,
+    ),
+    [mail, setMail] = useState<Mailbox | null>(null);
+
+  /* Liens reçus par message : confirmation ou réinitialisation. */
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    const verify = q.get("verifier"),
+      reset = q.get("reinitialiser");
+    if (!verify && !reset) return;
+    history.replaceState(null, "", "/demo/");
+    // Mise à jour différée d’un tour : l’URL n’est lisible qu’après hydratation.
+    if (reset) {
+      void Promise.resolve().then(() => {
+        setToken(reset);
+        setMode("reset");
+      });
+      return;
+    }
+    accountCall({ action: "verify", token: verify! }).then((r) => {
+      setMode("account");
+      setMessage({ text: r.message || "Lien invalide.", ok: r.ok });
+    });
+  }, []);
+
+  const switchTo = (m: Mode) => {
+    setMode(m);
+    setMessage(null);
+    setMail(null);
+    setPassword("");
+  };
+  async function signIn(address: string) {
+    const r = await fetch("/api/demo/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: address, password, code: factor }),
+    });
+    if (r.ok) location.reload();
+    else
+      setMessage({
+        text:
+          mode === "demo"
+            ? "Connexion refusée. Vérifiez le compte, le mot de passe et le code administrateur."
+            : "Connexion refusée. Vérifiez votre email et votre mot de passe, et que votre adresse est bien confirmée.",
+        ok: false,
+      });
+  }
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMessage(null);
+    setMail(null);
+    if (mode === "demo") await signIn(email);
+    else if (mode === "account") await signIn(ownEmail);
+    else {
+      const r = await accountCall(
+        mode === "register"
+          ? { action: "register", email: ownEmail, password, agency }
+          : mode === "forgot"
+            ? { action: "forgot", email: ownEmail }
+            : { action: "reset", token, password },
+      );
+      setMessage({ text: r.message || "Erreur.", ok: r.ok });
+      if (r.mailbox) setMail(r.mailbox);
+      if (r.ok && mode === "reset") {
+        setMode("account");
+        setPassword("");
+      }
+    }
+    setBusy(false);
+  }
+  const titles: Record<Mode, [string, string]> = {
+    demo: ["Connexion", "Se connecter à la démonstration"],
+    account: ["Mon espace client", "Se connecter"],
+    register: ["Créer un espace client", "Créer mon compte"],
+    forgot: ["Mot de passe oublié", "Recevoir un lien"],
+    reset: ["Nouveau mot de passe", "Enregistrer le mot de passe"],
+  };
   return (
     <div className="app-shell login-shell">
       <aside className="login-brand">
@@ -183,75 +429,321 @@ function Login({ accounts, code }: { accounts: Accounts; code: string }) {
             height={80}
           />
         </div>
-        <h1>Gestion des expéditions</h1>
-        <p>
-          Demandes, colis, départs et remises des agences de Paris, Brazzaville
-          et Pointe-Noire.
-        </p>
+        <div className="login-pitch">
+          <p className="eyebrow">Paris · Brazzaville · Pointe-Noire</p>
+          <h1>Vos envois, suivis de bout en bout.</h1>
+          <p>
+            Demandes, colis, départs, propositions et remises réunis dans un
+            seul espace, pour les clients comme pour les agences.
+          </p>
+          <ul className="login-points">
+            <li>Suivi étape par étape de chaque expédition</li>
+            <li>Propositions détaillées acceptées en ligne</li>
+            <li>Mesures contrôlées et historique conservé</li>
+          </ul>
+        </div>
         <span className="demo-flag">Démonstration — dossiers fictifs</span>
       </aside>
-      <form
-        className="login-form"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const r = await fetch("/api/demo/session", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, code: factor }),
-          });
-          if (r.ok) location.reload();
-          else
-            setMessage(
-              "Connexion refusée. Vérifiez le compte, le mot de passe et le code administrateur.",
-            );
-        }}
-      >
-        <h2>Connexion</h2>
-        <p className="hint">
-          Mot de passe des comptes de démonstration :{" "}
-          <code>DemoExpress!2026</code>. Code administrateur simulé :{" "}
-          <strong>{code}</strong> (valable 30 secondes, actualisez la page s’il
-          a expiré).
-        </p>
-        <label>
-          Compte
-          <select
-            aria-label="Compte"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          >
-            {accounts.map((a) => (
-              <option key={a.id} value={a.email}>
-                {roles[a.role].charAt(0).toUpperCase() + roles[a.role].slice(1)}{" "}
-                — {agencies[a.agency]} ({a.email})
-              </option>
+      <div className="login-panel">
+        {(mode === "demo" || mode === "account") && (
+          <div className="segmented" role="tablist" aria-label="Type d’accès">
+            {(
+              [
+                ["account", "Mon compte"],
+                ["demo", "Comptes de démonstration"],
+              ] as const
+            ).map(([m, label]) => (
+              <button
+                key={m}
+                type="button"
+                role="tab"
+                aria-selected={mode === m}
+                className={mode === m ? "on" : ""}
+                onClick={() => switchTo(m)}
+              >
+                {label}
+              </button>
             ))}
-          </select>
-        </label>
-        <label>
-          Mot de passe
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-          />
-        </label>
-        <label>
-          Code administrateur (simulation)
-          <input
-            value={factor}
-            onChange={(e) => setFactor(e.target.value)}
-            inputMode="numeric"
-          />
-        </label>
-        <button className="button">Se connecter à la démonstration</button>
-        {message && (
-          <p role="alert" className="error">
-            {message}
-          </p>
+          </div>
         )}
-      </form>
+        <form className="login-form" onSubmit={submit}>
+          <h2>{titles[mode][0]}</h2>
+          {mode === "demo" && (
+            <>
+              <p className="hint">
+                Mot de passe des comptes de démonstration :{" "}
+                <code>DemoExpress!2026</code>. Code administrateur simulé :{" "}
+                <strong>{code}</strong> (valable 30 secondes, actualisez la page
+                s’il a expiré).
+              </p>
+              <label>
+                Compte
+                <select
+                  aria-label="Compte"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                >
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.email}>
+                      {roles[a.role].charAt(0).toUpperCase() +
+                        roles[a.role].slice(1)}{" "}
+                      — {agencies[a.agency]} ({a.email})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          )}
+          {mode !== "demo" && mode !== "reset" && (
+            <label>
+              Adresse email
+              <input
+                type="email"
+                value={ownEmail}
+                onChange={(e) => setOwnEmail(e.target.value)}
+                autoComplete="email"
+                required
+              />
+            </label>
+          )}
+          {mode !== "forgot" && (
+            <label>
+              {mode === "register" || mode === "reset"
+                ? "Mot de passe (10 caractères minimum, lettres et chiffres)"
+                : "Mot de passe"}
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={
+                  mode === "register" || mode === "reset"
+                    ? "new-password"
+                    : "current-password"
+                }
+                minLength={mode === "register" || mode === "reset" ? 10 : 1}
+                required
+              />
+            </label>
+          )}
+          {mode === "register" && (
+            <label>
+              Agence de rattachement
+              <select
+                value={agency}
+                onChange={(e) => setAgency(e.target.value)}
+              >
+                {Object.entries(agencies).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {mode === "demo" && (
+            <label>
+              Code administrateur (simulation)
+              <input
+                value={factor}
+                onChange={(e) => setFactor(e.target.value)}
+                inputMode="numeric"
+              />
+            </label>
+          )}
+          <button className="button" disabled={busy}>
+            {busy ? "Un instant…" : titles[mode][1]}
+          </button>
+          {message && (
+            <p role="alert" className={message.ok ? "success" : "error"}>
+              {message.text}
+            </p>
+          )}
+          {mail && <SimulatedMail mail={mail} />}
+          <div className="login-links">
+            {mode === "account" && (
+              <>
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => switchTo("register")}
+                >
+                  Créer un espace client
+                </button>
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => switchTo("forgot")}
+                >
+                  Mot de passe oublié ?
+                </button>
+              </>
+            )}
+            {["register", "forgot", "reset"].includes(mode) && (
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => switchTo("account")}
+              >
+                ← Retour à la connexion
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Suivi public et affectation groupée ---------- */
+function TrackingCard({
+  reference,
+  code,
+}: {
+  reference: string;
+  code: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const url = `/suivi/?ref=${encodeURIComponent(reference)}&code=${code}`;
+  return (
+    <div className="tracking-card">
+      <div>
+        <span className="eyebrow">Code de suivi public</span>
+        <b className="tracking-code">{code}</b>
+        <small>
+          À communiquer avec la référence : il permet de consulter les étapes,
+          sans aucune donnée personnelle.
+        </small>
+      </div>
+      <div className="tracking-actions">
+        <a className="button small secondary" href={url} target="_blank">
+          Ouvrir le suivi
+        </a>
+        <button
+          type="button"
+          className="text-button"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(
+                `Référence : ${reference}\nCode de suivi : ${code}\n${location.origin}${url}`,
+              );
+              setCopied(true);
+            } catch {
+              setCopied(false);
+            }
+          }}
+        >
+          {copied ? "Copié ✓" : "Copier pour le client"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BulkAssign({
+  departure,
+  candidates,
+}: {
+  departure: Entity;
+  candidates: Entity[];
+}) {
+  const [chosen, setChosen] = useState<string[]>([]),
+    [busy, setBusy] = useState(false),
+    [report, setReport] = useState<{ ref: string; ok: boolean; why: string }[]>(
+      [],
+    );
+  if (!candidates.length && !report.length) return null;
+  async function assign() {
+    setBusy(true);
+    const out: typeof report = [];
+    // Une commande par expédition : chaque refus est expliqué sans bloquer les autres.
+    for (const id of chosen) {
+      const ship = candidates.find((c) => c.id === id)!;
+      const r = await fetch("/api/demo/operations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          command: "assignDeparture",
+          departureId: departure.id,
+          shipmentId: id,
+        }),
+      });
+      const data = r.ok ? {} : await r.json().catch(() => ({}));
+      out.push({
+        ref: shortRef(ship.payload.reference),
+        ok: r.ok,
+        why: r.ok ? "Affectée" : errors[data.message] || "Refusée",
+      });
+    }
+    setReport(out);
+    setChosen([]);
+    setBusy(false);
+  }
+  return (
+    <div className="bulk">
+      <h3>Affecter plusieurs expéditions</h3>
+      {candidates.length > 0 && (
+        <>
+          <p className="hint">
+            Expéditions de la même agence et du même mode, pas encore affectées.
+          </p>
+          <ul className="check-list">
+            {candidates.map((c) => (
+              <li key={c.id}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={chosen.includes(c.id)}
+                    onChange={(ev) =>
+                      setChosen(
+                        ev.target.checked
+                          ? [...chosen, c.id]
+                          : chosen.filter((x) => x !== c.id),
+                      )
+                    }
+                  />
+                  <span className="ref">{shortRef(c.payload.reference)}</span>
+                  <span>
+                    {String(c.payload.destination)} ·{" "}
+                    {stateLabel(c.payload.status)}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          <div className="drawer-actions">
+            <button
+              type="button"
+              className="button small"
+              disabled={!chosen.length || busy}
+              onClick={assign}
+            >
+              {busy
+                ? "Affectation…"
+                : chosen.length
+                  ? `Affecter ${chosen.length} expédition${chosen.length > 1 ? "s" : ""}`
+                  : "Sélectionnez des expéditions"}
+            </button>
+          </div>
+        </>
+      )}
+      {report.length > 0 && (
+        <div className="bulk-report" role="status">
+          <ul>
+            {report.map((r) => (
+              <li key={r.ref} className={r.ok ? "ok" : "bad"}>
+                <span className="ref">{r.ref}</span> — {r.why}
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => location.reload()}
+          >
+            Actualiser la fiche
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -284,6 +776,7 @@ export function Operations({
   actor,
   entities,
   accounts,
+  people = [],
   code,
   quotes = [],
   audit = [],
@@ -291,6 +784,7 @@ export function Operations({
   actor: Actor | null;
   entities: Entity[];
   accounts: Accounts;
+  people?: Person[];
   code: string;
   quotes?: QuoteView[];
   audit?: AuditView[];
@@ -355,8 +849,8 @@ export function Operations({
     proposals = of("proposal"),
     events = of("event"),
     tickets = of("ticket");
-  const email = (id: string) => accounts.find((a) => a.id === id)?.email || "—";
-  const clientAccounts = accounts.filter((a) => a.role === "client");
+  const email = (id: string) => people.find((a) => a.id === id)?.email || "—";
+  const clientAccounts = people.filter((a) => a.role === "client");
   const clients = clientAccounts.map((a) => ({ value: a.id, label: a.email }));
   const myAgencies = Object.entries(agencies)
     .filter(([k]) => actor.role === "admin" || k === actor.agency)
@@ -538,21 +1032,60 @@ export function Operations({
         shipments.length > 0 && {
           key: "proposal",
           title: "Envoyer une proposition",
-          hint: "Montant en centimes pour l’euro (12500 = 125,00 €), en francs pour le XAF.",
+          hint: "Détaillez les prestations ligne par ligne : le total est calculé automatiquement, sans arrondi caché.",
           command: "proposal",
           fields: [
             pick("shipmentId", "Expédition", shipments),
-            { name: "totalMinor", label: "Montant total", type: "decimal" },
+            { name: "lines", label: "Détail", type: "lines", group: "lignes" },
             {
-              name: "currency",
-              label: "Devise",
-              options: [
-                { value: "EUR", label: "Euro (EUR)" },
-                { value: "XAF", label: "Franc CFA (XAF)" },
-              ],
+              name: "exclusions",
+              label: "Conditions, inclusions et exclusions",
             },
-            { name: "exclusions", label: "Prestations et exclusions" },
             { name: "validUntil", label: "Valable jusqu’au", type: "date" },
+          ],
+        },
+      can("admin", "manager", "agent") &&
+        departures.some((d) => d.payload.status !== "confirme") && {
+          key: "confirmDeparture",
+          title: "Confirmer un départ",
+          hint: "La date confirmée remplace la date prévisionnelle pour les clients et le suivi public.",
+          command: "confirmDeparture",
+          fields: [
+            pick(
+              "departureId",
+              "Départ",
+              departures.filter((d) => d.payload.status !== "confirme"),
+            ),
+            {
+              name: "confirmedAt",
+              label: "Date et heure confirmées (UTC)",
+              type: "datetime-local",
+            },
+          ],
+        },
+      can("admin", "manager") &&
+        shipments.length > 0 && {
+          key: "transferShipment",
+          title: "Transférer une expédition",
+          hint: "Confie le dossier, ses colis et son historique à une autre agence, par exemple à l’arrivée au Congo.",
+          command: "transferShipment",
+          fields: [
+            pick(
+              "shipmentId",
+              "Expédition",
+              shipments.filter(
+                (x) => !["remis", "annule"].includes(String(x.payload.status)),
+              ),
+            ),
+            {
+              name: "agency",
+              label: "Nouvelle agence",
+              options: Object.entries(agencies).map(([value, label]) => ({
+                value,
+                label,
+              })),
+            },
+            { name: "reason", label: "Motif du transfert" },
           ],
         },
       {
@@ -1184,9 +1717,11 @@ export function Operations({
       head = (
         <>
           <span className="ref">
-            {String(
-              p.reference || p.number || p.subject || stateLabel(p.status),
-            )}
+            {e.kind === "departure"
+              ? `${services[String(p.mode)]} · ${date(p.confirmedAt || p.scheduledAt, e.agency, false)}`
+              : String(
+                  p.reference || p.number || p.subject || stateLabel(p.status),
+                )}
           </span>{" "}
           {p.status ? <Pill value={p.status} /> : null}
         </>
@@ -1229,6 +1764,12 @@ export function Operations({
                 own.length ? fr(parcelVolume(own), 3) + " m³" : "—",
               ],
             ])}
+            {typeof p.trackingCode === "string" && (
+              <TrackingCard
+                reference={String(p.reference)}
+                code={p.trackingCode}
+              />
+            )}
             {staff && (
               <div className="drawer-actions">
                 {hasTask("event") && (
@@ -1267,7 +1808,43 @@ export function Operations({
                     Envoyer une proposition
                   </button>
                 )}
+                {hasTask("transferShipment") &&
+                  !["remis", "annule"].includes(String(p.status)) && (
+                    <button
+                      className="button secondary small"
+                      onClick={() =>
+                        openTask("transferShipment", { shipmentId: e.id })
+                      }
+                    >
+                      Transférer d’agence
+                    </button>
+                  )}
               </div>
+            )}
+            {Array.isArray(p.transfers) && p.transfers.length > 0 && (
+              <>
+                <h3>Transferts</h3>
+                <ul className="mini-list">
+                  {(
+                    p.transfers as {
+                      from: string;
+                      to: string;
+                      reason: string;
+                      at: string;
+                    }[]
+                  ).map((t, i) => (
+                    <li key={i}>
+                      <div>
+                        <strong>
+                          {agencies[t.from]} → {agencies[t.to]}
+                        </strong>
+                        <span>{t.reason}</span>
+                      </div>
+                      <span>{date(t.at, t.to)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
             <h3>Suivi</h3>
             <ol className="timeline">
@@ -1388,6 +1965,16 @@ export function Operations({
               ],
             ])}
             <div className="drawer-actions">
+              {hasTask("confirmDeparture") && p.status !== "confirme" && (
+                <button
+                  className="button small"
+                  onClick={() =>
+                    openTask("confirmDeparture", { departureId: e.id })
+                  }
+                >
+                  Confirmer la date
+                </button>
+              )}
               <a
                 className="button secondary small"
                 href={"/api/demo/manifest?id=" + e.id}
@@ -1395,6 +1982,18 @@ export function Operations({
                 Exporter le manifeste
               </a>
             </div>
+            {hasTask("assignDeparture") && (
+              <BulkAssign
+                departure={e}
+                candidates={shipments.filter(
+                  (x) =>
+                    x.agency === e.agency &&
+                    x.payload.service === p.mode &&
+                    !x.payload.departure &&
+                    !["remis", "annule"].includes(String(x.payload.status)),
+                )}
+              />
+            )}
             <h3>Expéditions chargées</h3>
             {ids.length ? (
               <ul className="mini-list">
@@ -1426,7 +2025,49 @@ export function Operations({
                 p.acceptedAt ? date(p.acceptedAt, e.agency) : "—",
               ],
             ])}
-            <h3>Prestations et exclusions</h3>
+            {Array.isArray(p.lines) && p.lines.length > 0 && (
+              <>
+                <h3>Détail</h3>
+                <table className="lines-view">
+                  <thead>
+                    <tr>
+                      <th>Prestation</th>
+                      <th>Qté</th>
+                      <th>Prix unitaire</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(
+                      p.lines as {
+                        label: string;
+                        quantity: number;
+                        unitMinor: string;
+                        totalMinor: string;
+                      }[]
+                    ).map((l, i) => (
+                      <tr key={i}>
+                        <td>{l.label}</td>
+                        <td>{l.quantity}</td>
+                        <td>
+                          {money(Number(l.unitMinor), String(p.currency))}
+                        </td>
+                        <td>
+                          {money(Number(l.totalMinor), String(p.currency))}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan={3}>Total</td>
+                      <td>{money(Number(p.totalMinor), String(p.currency))}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </>
+            )}
+            <h3>Conditions, inclusions et exclusions</h3>
             <p>{String(p.exclusions ?? "—")}</p>
             <div className="drawer-actions">
               <a
@@ -1925,7 +2566,7 @@ export function Operations({
                     <td>{date(a.createdAt)}</td>
                     <td>{actions[a.action] || a.action}</td>
                     <td>
-                      {accounts.find((x) => x.id === a.actor)?.email || a.actor}
+                      {people.find((x) => x.id === a.actor)?.email || a.actor}
                     </td>
                     <td className="ref">{shortRef(a.objectId)}</td>
                   </tr>

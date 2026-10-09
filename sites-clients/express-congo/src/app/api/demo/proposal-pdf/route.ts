@@ -10,17 +10,41 @@ export async function GET(request: Request) {
       new URL(request.url).searchParams.get("id") || "",
     );
     if (item.kind !== "proposal") return new Response(null, { status: 404 });
+    const p = item.payload;
+    const currency = String(p.currency);
+    const amount = (minor: unknown) => {
+      const v = BigInt(String(minor));
+      return currency === "EUR"
+        ? `${v / 100n},${String(v % 100n).padStart(2, "0")} EUR`
+        : `${v} XAF`;
+    };
+    const lines = (Array.isArray(p.lines) ? p.lines : []) as {
+      label: string;
+      quantity: number;
+      unitMinor: string;
+      totalMinor: string;
+    }[];
     const bytes = textPdf([
       "EXPRESS CONGO - DEMONSTRATION - NON VALABLE POUR UN ENVOI REEL",
-      "Proposition " + item.payload.number,
-      "Version " + item.payload.version,
-      "Total unites mineures: " +
-        item.payload.totalMinor +
-        " " +
-        item.payload.currency,
-      "Exclusions et detail: " + item.payload.exclusions,
-      "Validite: " + item.payload.validUntil,
-      "Etat: " + item.payload.status,
+      "",
+      "Proposition " + p.number + " - version " + p.version,
+      "Validite : " + p.validUntil,
+      "",
+      ...(lines.length
+        ? [
+            "Detail",
+            ...lines.map(
+              (l) =>
+                `- ${l.label} : ${l.quantity} x ${amount(l.unitMinor)} = ${amount(l.totalMinor)}`,
+            ),
+            "",
+          ]
+        : []),
+      "TOTAL : " + amount(p.totalMinor),
+      "",
+      "Conditions, inclusions et exclusions : " + p.exclusions,
+      "",
+      "Etat : " + p.status,
       "Une acceptation ne confirme aucun paiement.",
     ]);
     return new Response(bytes, {

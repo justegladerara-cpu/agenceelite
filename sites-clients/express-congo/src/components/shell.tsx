@@ -30,6 +30,7 @@ export function Header() {
             <Link href="/services">Nos solutions</Link>
             <Link href="/preparer-mon-envoi">Préparer un envoi</Link>
             <Link href="/agences">Nos agences</Link>
+            <Link href="/suivi">Suivre un envoi</Link>
           </nav>
           <div className="header-actions">
             <Link className="client-link" href="/espace-client">
@@ -45,6 +46,7 @@ export function Header() {
               <Link href="/services">Nos solutions</Link>
               <Link href="/preparer-mon-envoi">Préparer un envoi</Link>
               <Link href="/agences">Nos agences</Link>
+              <Link href="/suivi">Suivre un envoi</Link>
               <Link href="/espace-client">Espace client</Link>
               <Link href="/devis">Demander un devis</Link>
             </nav>
@@ -94,6 +96,19 @@ export function Footer() {
             <Link href="/agences">Paris · Brazzaville · Pointe-Noire</Link>
           </div>
           <div>
+            <h2>Nous joindre</h2>
+            <a href="tel:+33148052220">+33 1 48 05 22 20</a>
+            <a
+              href="https://wa.me/33621933298"
+              target="_blank"
+              rel="noreferrer"
+            >
+              WhatsApp +33 6 21 93 32 98
+            </a>
+            <a href="mailto:expresscongo@yahoo.fr">expresscongo@yahoo.fr</a>
+            <span className="footer-note">Lun. – sam., 9 h – 17 h</span>
+          </div>
+          <div>
             <h2>Informations</h2>
             <Link href="/cgv">Conditions générales</Link>
             <Link href="/mentions-legales">Mentions légales</Link>
@@ -109,8 +124,9 @@ export function Footer() {
       </footer>
       <nav className="mobile-bar" aria-label="Actions rapides">
         <Link href="/devis">Devis</Link>
-        <Link href="/contact#whatsapp">WhatsApp à vérifier</Link>
-        <Link href="/contact#appeler">Choisir une agence</Link>
+        <Link href="/suivi">Suivi</Link>
+        <Link href="/contact#whatsapp">WhatsApp</Link>
+        <Link href="/contact#appeler">Appeler</Link>
       </nav>
     </>
   );

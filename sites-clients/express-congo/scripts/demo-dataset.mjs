@@ -77,6 +77,11 @@ await admin("newDeparture", {
   mode: "aerien",
   scheduledAt: day(18),
 });
+// Le premier vol est confirmé : sa date remplace la date prévisionnelle.
+await admin("confirmDeparture", {
+  departureId: departures.aerien.id,
+  confirmedAt: day(4),
+});
 
 const plan = [
   {
@@ -203,20 +208,51 @@ for (const s of plan) {
   }
 }
 const valid = new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10);
+// Montants fictifs de démonstration : aucune grille tarifaire n’est validée.
 const offers = [
-  [0, "48500", "EUR"],
-  [1, "112000", "EUR"],
-  [2, "26000", "EUR"],
-  [3, "39500", "EUR"],
-  [4, "540000", "XAF"],
+  [
+    0,
+    "EUR",
+    [
+      ["Transport aérien (démonstration)", 1, "395"],
+      ["Frais de dossier (démonstration)", 1, "90"],
+    ],
+  ],
+  [
+    1,
+    "EUR",
+    [
+      ["Groupage maritime (démonstration)", 4, "255"],
+      ["Emballage renforcé (démonstration)", 2, "50"],
+    ],
+  ],
+  [2, "EUR", [["Transport aérien (démonstration)", 2, "130"]]],
+  [
+    3,
+    "EUR",
+    [
+      ["Groupage maritime (démonstration)", 1, "305"],
+      ["Frais de dossier (démonstration)", 1, "90"],
+    ],
+  ],
+  [
+    4,
+    "XAF",
+    [
+      ["Conteneur complet (démonstration)", 1, "500000"],
+      ["Manutention (démonstration)", 1, "40000"],
+    ],
+  ],
 ];
 const proposals = [];
-for (const [i, total, currency] of offers)
+for (const [i, currency, lines] of offers)
   proposals.push(
     await admin("proposal", {
       shipmentId: created[i].id,
-      totalMinor: total,
       currency,
+      lines: JSON.stringify(
+        lines.map(([label, quantity, unit]) => ({ label, quantity, unit })),
+      ),
       exclusions:
         "Transport et frais de dossier ; droits et taxes à destination exclus (démonstration).",
       validUntil: valid,

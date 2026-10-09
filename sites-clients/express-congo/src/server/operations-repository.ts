@@ -8,6 +8,7 @@ import {
   shipmentTransition,
 } from "@/domain/operations";
 import { ParcelInput, validateParcel } from "@/domain/measurements";
+import { proposalLines } from "@/domain/proposals";
 type Row = {
   id: string;
   kind: string;
@@ -136,6 +137,8 @@ async function perform(
     proposal: "proposal",
     ticket: "ticket",
     replyTicket: "ticket",
+    confirmDeparture: "departure",
+    transferShipment: "shipment",
   };
   if (domains[command] && !canWrite(actor, domains[command]))
     throw new Error("ACCESS_DENIED");
@@ -313,11 +316,19 @@ async function perform(
   }
   if (command === "proposal") {
     const shipment = await getEntity(actor, text(input.shipmentId, 100));
+    const currency = String(input.currency);
+    // Lignes détaillées si fournies ; sinon montant global (compatibilité).
+    const detailed =
+      input.lines !== undefined && input.lines !== ""
+        ? proposalLines(input.lines, currency)
+        : undefined;
+    if (detailed === null) throw new Error("INVALID_LINES");
+    const totalMinor = detailed?.totalMinor ?? String(input.totalMinor);
     if (
       shipment.kind !== "shipment" ||
-      !/^\d{1,12}$/.test(String(input.totalMinor)) ||
-      BigInt(String(input.totalMinor)) <= 0n ||
-      !["EUR", "XAF"].includes(String(input.currency)) ||
+      !/^\d{1,12}$/.test(totalMinor) ||
+      BigInt(totalMinor) <= 0n ||
+      !["EUR", "XAF"].includes(currency) ||
       !Number.isFinite(Date.parse(String(input.validUntil)))
     )
       throw new Error("INVALID_INPUT");
@@ -329,8 +340,9 @@ async function perform(
       shipmentId: shipment.id,
       version,
       number: "DEMO-DEV-" + randomBytes(8).toString("hex"),
-      totalMinor: String(input.totalMinor),
-      currency: input.currency,
+      totalMinor,
+      currency,
+      lines: detailed?.lines ?? [],
       exclusions: text(input.exclusions),
       status: "proposition-envoyee",
       validUntil: text(input.validUntil, 40),
@@ -362,6 +374,100 @@ async function perform(
     if (!result.changes) throw new Error("CONFLICT");
     await audit(actor, "proposal.accepted", proposal.id, {});
     return { ok: true, payment: "non-confirme" };
+  }
+  if (command === "confirmDeparture") {
+    if (!["admin", "manager", "agent"].includes(actor.role))
+      throw new Error("ACCESS_DENIED");
+    const departure = await getEntity(actor, text(input.departureId, 100)),
+      when = String(input.confirmedAt || departure.payload.scheduledAt);
+    if (
+      departure.kind !== "departure" ||
+      departure.payload.status === "confirme" ||
+      !Number.isFinite(Date.parse(when))
+    )
+      throw new Error("INVALID_INPUT");
+    await replace(actor, departure, {
+      ...departure.payload,
+      confirmedAt: new Date(
+        /(?:Z|[+-]\d{2}:\d{2})$/.test(when) ? when : when + "Z",
+      ).toISOString(),
+      confirmedBy: actor.id,
+      status: "confirme",
+    });
+    return { ok: true };
+  }
+  if (command === "transferShipment") {
+    if (!["admin", "manager"].includes(actor.role))
+      throw new Error("ACCESS_DENIED");
+    const shipment = await getEntity(actor, text(input.shipmentId, 100)),
+      agency = text(input.agency, 50),
+      reason = text(input.reason);
+    const status = String(shipment.payload.status);
+    const arrived = [
+      "arrive",
+      "formalites-en-cours",
+      "disponible-au-retrait",
+      "incident",
+      "en-attente-information",
+    ].includes(status);
+    if (
+      shipment.kind !== "shipment" ||
+      !["paris", "brazzaville", "pointe-noire"].includes(agency) ||
+      agency === shipment.agency ||
+      ["remis", "annule"].includes(status) ||
+      // Un dossier affecté à un départ ne change d’agence qu’à l’arrivée.
+      (shipment.payload.departure && !arrived)
+    )
+      throw new Error("TRANSFER_REFUSED");
+    // Dossier, colis, événements et documents changent d’agence d’un bloc ;
+    // le verrou de révision refuse le lot si le dossier a changé entre-temps.
+    const related = (await listEntities(actor)).filter(
+      (e) =>
+        e.payload.shipmentId === shipment.id &&
+        ["parcel", "event", "document"].includes(e.kind),
+    );
+    const before = shipment.agency;
+    const result = await (
+      await db()
+    ).run(
+      "UPDATE entities SET agency=?,revision=revision+1,payload=? WHERE id=? AND revision=?",
+      agency,
+      JSON.stringify({
+        ...shipment.payload,
+        transfers: [
+          ...((shipment.payload.transfers as unknown[]) || []),
+          {
+            from: before,
+            to: agency,
+            reason,
+            by: actor.id,
+            at: new Date().toISOString(),
+          },
+        ],
+      }),
+      shipment.id,
+      shipment.revision,
+    );
+    if (!result.changes) throw new Error("CONFLICT");
+    await (
+      await db()
+    ).batch([
+      ...related.map(
+        (e) =>
+          ["UPDATE entities SET agency=? WHERE id=?", [agency, e.id]] as [
+            string,
+            unknown[],
+          ],
+      ),
+      [
+        AUDIT,
+        auditParams(actor, "shipment.transferred", shipment.id, {
+          from: before,
+          to: agency,
+        }),
+      ],
+    ]);
+    return { ok: true };
   }
   if (command === "ticket")
     return await put(actor, "ticket", actor.id, actor.agency, {

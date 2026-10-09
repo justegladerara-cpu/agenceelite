@@ -230,3 +230,73 @@ test("demandes web : traitement contrôlé côté serveur et tableau de bord", a
     page.getByRole("button", { name: "Passer à « Proposition envoyée »" }),
   ).toBeVisible();
 });
+
+test("inscription simulée, suivi public et proposition détaillée", async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(60000);
+  const email = `e2e-${Date.now()}@example.invalid`;
+  await page.goto("/demo");
+  await page.getByRole("tab", { name: "Mon compte" }).click();
+  await page.getByRole("button", { name: "Créer un espace client" }).click();
+  await page.getByLabel("Adresse email").fill(email);
+  await page.getByLabel(/Mot de passe/).fill("Essai2026abcd");
+  await page.getByRole("button", { name: "Créer mon compte" }).click();
+  await expect(page.locator(".mail-sim")).toContainText("aucun email");
+  await page.getByRole("link", { name: "Ouvrir le lien du message" }).click();
+  await expect(page.getByText("Adresse confirmée")).toBeVisible();
+  await page.getByLabel("Adresse email").fill(email);
+  await page.getByLabel("Mot de passe").fill("Essai2026abcd");
+  await page.getByRole("button", { name: "Se connecter", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Expéditions", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Se déconnecter" }).click();
+
+  // L’administrateur ouvre une expédition pour ce nouveau client.
+  const session = await (await page.request.get("/api/demo/session")).json();
+  await page
+    .getByLabel("Compte", { exact: true })
+    .selectOption("admin@example.invalid");
+  await page
+    .getByLabel("Mot de passe", { exact: true })
+    .fill("DemoExpress!2026");
+  await page
+    .getByLabel("Code administrateur (simulation)")
+    .fill(session.secondStep);
+  await page
+    .getByRole("button", { name: "Se connecter à la démonstration" })
+    .click();
+  await page.locator("summary", { hasText: "Nouveau" }).click();
+  await page.getByRole("button", { name: "Ouvrir une expédition" }).click();
+  await page.locator("#newShipment-owner").selectOption({ label: email });
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: "Expéditions", exact: true }).click();
+  await page.locator(".data-table tbody tr", { hasText: email }).click();
+  const href = await page
+    .getByRole("link", { name: "Ouvrir le suivi" })
+    .getAttribute("href");
+  await page.getByRole("button", { name: "Fermer" }).click();
+
+  // Proposition détaillée : total calculé et affiché.
+  await page.locator("summary", { hasText: "Nouveau" }).click();
+  await page.getByRole("button", { name: "Envoyer une proposition" }).click();
+  await page.getByLabel("Quantité 1").fill("2");
+  await page.getByLabel("Prix unitaire 1").fill("100,50");
+  await expect(page.locator(".lines-total")).toContainText("201,00");
+  await page.getByLabel("Conditions, inclusions et exclusions").fill("Essai");
+  await page.getByLabel("Valable jusqu’au").fill("2099-01-01");
+  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByRole("button", { name: "Propositions", exact: true }).click();
+  await expect(page.locator(".data-table")).toContainText("201,00");
+
+  // Suivi public, sans session : étapes visibles, aucune donnée personnelle.
+  const visitor = await browser.newPage();
+  await visitor.goto(href!);
+  await expect(visitor.locator(".tracking-result")).toContainText(
+    "Dossier ouvert",
+  );
+  await expect(visitor.locator("body")).not.toContainText(email);
+  await visitor.close();
+});

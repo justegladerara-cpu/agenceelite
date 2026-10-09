@@ -29,9 +29,13 @@ Les tests navigateur utilisent Chrome installé, ou `PLAYWRIGHT_CHANNEL=msedge` 
 
 `/admin` : accès de démonstration `express-demo-local`, remplaçable par `DEMO_EDITOR_PASSWORD`. Ce mot de passe public n’est pas un secret de production. Les sessions sont opaques, hachées en base, HttpOnly et SameSite strict, expirent après une heure. Cet accès est refusé en staging et en production. Les propositions éditoriales restent `PROPOSÉ` et n’apparaissent qu’en préproduction.
 
-Le portail de démonstration est accessible à `/demo`. Comptes : `client-a@example.invalid`, `client-b@example.invalid`, `agent-paris@example.invalid`, `agent-brazzaville@example.invalid`, `admin@example.invalid` ; mot de passe `DemoExpress!2026`. Le second facteur administrateur affiché est une simulation publique, jamais un MFA réel. Les permissions de lecture et mutation sont néanmoins vérifiées côté serveur sur les dossiers fictifs. Inscription réelle, récupération et comptes professionnels restent à réaliser.
+Le portail de démonstration est accessible à `/demo`. Comptes : `client-a@example.invalid`, `client-b@example.invalid`, `agent-paris@example.invalid`, `agent-brazzaville@example.invalid`, `admin@example.invalid` ; mot de passe `DemoExpress!2026`. Le second facteur administrateur affiché est une simulation publique, jamais un MFA réel. Les permissions de lecture et mutation sont néanmoins vérifiées côté serveur sur les dossiers fictifs. Un client peut aussi créer son propre espace (onglet « Mon compte ») : confirmation de l’adresse et mot de passe oublié fonctionnent, le message qui serait envoyé par email s’affiche à l’écran en démonstration. Les comptes professionnels restent à réaliser.
 
 Les devis sont persistés atomiquement avec leurs pièces en quarantaine et une clé d’idempotence. Les pièces ne sont pas téléchargeables, faute d’analyse connectée. Aucun email, paiement ou suivi réel n’est simulé.
+
+## Suivi public
+
+`/suivi` : la référence de l’expédition et son code de suivi (affiché et copiable dans la fiche de l’expédition) donnent les étapes, sans aucune donnée personnelle. Le code est dérivé de `TRACKING_SECRET` (obligatoire hors démonstration).
 
 ## Logiciel de gestion (démonstration)
 

@@ -1,4 +1,13 @@
-# Rapport de vérification — 8 octobre 2026
+# Rapport de vérification — 9 octobre 2026
+
+## Reprise du 9 octobre 2026 (Linux, Node.js 22.22, Chromium 153 via PLAYWRIGHT_EXECUTABLE)
+
+- `npm run check` : TypeScript, ESLint et **29 tests** réussis (5 nouveaux : montants exacts, proposition détaillée, inscription/confirmation/réinitialisation, suivi public sans donnée personnelle, confirmation de départ et transfert d’agence).
+- `npm run build` et `npm run cf:build` réussis.
+- `npx playwright test` : **14 scénarios** réussis, dont le nouveau parcours inscription simulée → expédition → proposition détaillée → suivi public sans session.
+- Essai du Worker local (`wrangler dev`, D1 local) : inscription 201, confirmation 200 puis 422 au rejeu, suivi 200 avec le bon code, proposition détaillée 201 (total 2100).
+
+# Rapport précédent — 8 octobre 2026
 
 Environnement exécuté : Windows, Node.js 24.19.0, Chrome installé, APP_ENV=demo. Aucun compte externe. Les commandes ci-dessous se lancent depuis la racine de l’application.
 

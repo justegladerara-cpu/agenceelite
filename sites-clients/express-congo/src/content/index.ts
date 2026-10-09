@@ -16,8 +16,13 @@ export const publicPaths = [
   ...data.agencies.map((a) => `/agences/${a.slug}`),
   ...data.pages.map((p) => `/${p.slug}`),
 ];
+/**
+ * Information reprise du site officiel, encore à faire valider par
+ * Express Congo (EC-026). Affichée telle quelle en démonstration et en
+ * préproduction, masquée en production tant qu’elle n’est pas validée.
+ */
 export function observed(value: string) {
-  return production() ? "" : `[À CONFIRMER : ${value}]`;
+  return production() ? "" : value;
 }
 /** Affichage lisible ; le lien tel: garde le format international. */
 export function formatPhone(e164: string) {

@@ -70,7 +70,25 @@ test("permissions, fonctionnalités désactivées et noindex", async ({
 }) => {
   expect((await request.get("/api/editor")).status()).toBe(401);
   expect((await request.post("/api/editor", { data: {} })).status()).toBe(403);
-  expect((await request.post("/api/suivi")).status()).toBe(503);
+  // Suivi : origine contrôlée, champs obligatoires, réponse identique si inconnu.
+  expect((await request.post("/api/suivi")).status()).toBe(403);
+  const origin = process.env.BASE_URL || "http://127.0.0.1:3000";
+  expect(
+    (
+      await request.post("/api/suivi", {
+        headers: { Origin: origin },
+        data: {},
+      })
+    ).status(),
+  ).toBe(400);
+  expect(
+    (
+      await request.post("/api/suivi", {
+        headers: { Origin: origin },
+        data: { reference: "DEMO-EC-INCONNUE", code: "ABCD-EFGH" },
+      })
+    ).status(),
+  ).toBe(404);
   expect((await request.get("/")).headers()["x-robots-tag"]).toContain(
     "noindex",
   );

@@ -12,6 +12,8 @@ import {
   MeasureDiagram,
 } from "@/components/public";
 import { CTA } from "@/components/shell";
+import { TrackingForm } from "@/components/tracking";
+import { trackingEnabled } from "@/server/tracking";
 import { production } from "@/config";
 import { db } from "@/server/database";
 export const dynamic = "force-dynamic";
@@ -26,6 +28,13 @@ const titles: Record<string, string> = {
   faq: "Questions fréquentes",
   contact: "Parlons de votre envoi",
   "espace-client": "Votre espace client",
+};
+const subtitles: Record<string, string> = {
+  suivi:
+    "Consultez les étapes de votre envoi avec la référence et le code de suivi remis par votre agence.",
+  contact:
+    "Une agence à Paris, deux au Congo : appelez, écrivez ou décrivez votre envoi en ligne.",
+  agences: "Paris pour le départ, Brazzaville et Pointe-Noire pour l’arrivée.",
 };
 function titleFor(path: string) {
   return (
@@ -90,6 +99,7 @@ export default async function Page({
           <p>
             {page?.description ||
               service?.intro ||
+              subtitles[path] ||
               "Préparez votre besoin, puis faites confirmer les conditions de votre envoi."}
           </p>
         </div>
@@ -199,17 +209,19 @@ export default async function Page({
             </Link>
           </div>
         )}
-        {path === "suivi" && (
-          <div className="reading card">
-            <h2>Suivi public non activé</h2>
-            <p>
-              Les procédures et les dossiers réels doivent être raccordés avant
-              ouverture. Pour cette présentation, aucune référence réelle n’est
-              recherchée et aucun événement de transport n’est simulé.
-            </p>
-            <Link href="/contact">Consulter les contacts de l’agence →</Link>
-          </div>
-        )}
+        {path === "suivi" &&
+          (trackingEnabled() ? (
+            <TrackingForm />
+          ) : (
+            <div className="reading card">
+              <h2>Suivi en ligne bientôt disponible</h2>
+              <p>
+                En attendant, votre agence vous renseigne sur l’avancement de
+                votre envoi par téléphone ou sur place.
+              </p>
+              <Link href="/contact">Consulter les contacts de l’agence →</Link>
+            </div>
+          ))}
         {path === "espace-client" && (
           <div className="reading card">
             <h2>Ouverture des comptes désactivée</h2>
@@ -292,23 +304,36 @@ export default async function Page({
               <h2>Agence de {agency.name}</h2>
               {!production() && (
                 <>
-                  <p>{observed(agency.address)}</p>
-                  <h3>Téléphones observés, à confirmer</h3>
-                  {agency.phones.map((p) => (
-                    <p key={p}>
-                      <Link href={"tel:" + p}>{formatPhone(p)}</Link>
-                    </p>
-                  ))}
-                  <h3>Horaires observés, à confirmer</h3>
-                  <p>
-                    {observed(
-                      "horaires publiés " +
-                        agency.hoursObserved +
-                        " — fuseau " +
-                        agency.timezone,
-                    )}
-                  </p>
+                  <dl className="contact-list">
+                    <div>
+                      <dt>Adresse</dt>
+                      <dd>{observed(agency.address)}</dd>
+                    </div>
+                    <div>
+                      <dt>Téléphone</dt>
+                      <dd>
+                        {agency.phones.map((p) => (
+                          <Link key={p} href={"tel:" + p}>
+                            {formatPhone(p)}
+                          </Link>
+                        ))}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Horaires</dt>
+                      <dd>
+                        Du lundi au samedi, de 9 h à 17 h sans interruption
+                        <small>
+                          Heure de{" "}
+                          {agency.timezone === "Europe/Paris"
+                            ? "Paris"
+                            : "Brazzaville"}
+                        </small>
+                      </dd>
+                    </div>
+                  </dl>
                   <Link
+                    className="button secondary small"
                     href={
                       "https://www.google.com/maps/search/?api=1&query=" +
                       encodeURIComponent(agency.address)
@@ -316,8 +341,9 @@ export default async function Page({
                     rel="noreferrer"
                     target="_blank"
                   >
-                    Ouvrir la recherche d’itinéraire (service externe) ↗
+                    Itinéraire ↗
                   </Link>
+                  <p className="source-note">{content.sourceNote}</p>
                 </>
               )}
               <p>
@@ -344,34 +370,53 @@ export default async function Page({
             <AgencyCards />
             {!production() && (
               <div className="contact-panel">
-                <h2>Contacts observés — à confirmer</h2>
-                <p>
-                  <Link href="mailto:expresscongo@yahoo.fr">
-                    expresscongo@yahoo.fr
-                  </Link>
-                </p>
-                <p id="whatsapp">
-                  <Link
-                    href="https://wa.me/33621933298?text=Bonjour%2C%20je%20souhaite%20des%20informations%20sur%20un%20envoi%20France%20vers%20la%20R%C3%A9publique%20du%20Congo."
+                <div className="contact-tiles">
+                  <a
+                    className="contact-tile"
+                    href={"tel:" + content.contact.phone}
+                    id="appeler"
+                  >
+                    <span className="eyebrow">Appeler Paris</span>
+                    <b>{formatPhone(content.contact.phone)}</b>
+                    <small>Du lundi au samedi, 9 h – 17 h</small>
+                  </a>
+                  <a
+                    className="contact-tile whatsapp"
+                    id="whatsapp"
+                    href={`https://wa.me/${content.contact.whatsapp.slice(1)}?text=Bonjour%2C%20je%20souhaite%20des%20informations%20sur%20un%20envoi%20France%20vers%20la%20R%C3%A9publique%20du%20Congo.`}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Ouvrir WhatsApp Paris (numéro à vérifier) ↗
-                  </Link>
-                </p>
-                {content.socialObserved.map((s) => (
-                  <p key={s.url}>
-                    <Link href={s.url} target="_blank" rel="noreferrer">
-                      {s.network} (page observée, à confirmer) ↗
-                    </Link>
-                  </p>
-                ))}
-                <p id="appeler">
-                  <Link href="/agences">Choisir l’agence à appeler →</Link>
-                </p>
-                <p>
-                  L’ouverture de WhatsApp ne constitue pas un enregistrement de
-                  demande.
+                    <span className="eyebrow">WhatsApp</span>
+                    <b>{formatPhone(content.contact.whatsapp)}</b>
+                    <small>Réponse aux heures d’ouverture</small>
+                  </a>
+                  <a
+                    className="contact-tile"
+                    href={"mailto:" + content.contact.email}
+                  >
+                    <span className="eyebrow">Email</span>
+                    <b>{content.contact.email}</b>
+                    <small>Pour les documents et les questions écrites</small>
+                  </a>
+                  {content.socialObserved.map((s) => (
+                    <a
+                      className="contact-tile"
+                      key={s.url}
+                      href={s.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <span className="eyebrow">{s.network}</span>
+                      <b>Express Congo</b>
+                      <small>Actualités et départs</small>
+                    </a>
+                  ))}
+                </div>
+                <p className="source-note">
+                  Un message WhatsApp ou un appel n’enregistre pas de demande :
+                  pour un envoi, utilisez le formulaire de devis.{" "}
+                  {content.sourceNote}
                 </p>
               </div>
             )}
@@ -396,10 +441,9 @@ export default async function Page({
             ))}
             {["cgv", "mentions-legales", "confidentialite"].includes(path) &&
               !production() && (
-                <p className="notice">
-                  {observed(
-                    "version à approuver avant collecte réelle et publication",
-                  )}
+                <p className="source-note">
+                  Texte établi à partir du site officiel, à faire approuver par
+                  Express Congo avant la mise en service.
                 </p>
               )}
             <div className="actions">

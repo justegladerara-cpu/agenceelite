@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { content, observed } from "@/content";
+import { content, observed, formatPhone } from "@/content";
 import { production } from "@/config";
 export function ServiceCards() {
   return (
@@ -31,7 +31,14 @@ export function AgencyCards() {
         <article className="card agency-card" key={a.slug}>
           <span className="eyebrow">{a.country}</span>
           <h3>{a.name}</h3>
-          {!production() && <p className="muted">{observed(a.address)}</p>}
+          {!production() && (
+            <>
+              <p className="muted">{observed(a.address)}</p>
+              <p className="agency-phone">
+                <a href={"tel:" + a.phones[0]}>{formatPhone(a.phones[0])}</a>
+              </p>
+            </>
+          )}
           <Link href={"/agences/" + a.slug}>Voir la fiche agence →</Link>
         </article>
       ))}
@@ -60,7 +67,7 @@ export function FAQ() {
         ],
         [
           "Comment consulter le suivi ?",
-          "Le suivi public sera activé après validation des procédures et raccordement des dossiers réels. Aucune localisation GPS n’est simulée.",
+          "Sur la page Suivi, saisissez la référence et le code de suivi remis par votre agence. Vous voyez les étapes de votre envoi, sans aucune donnée personnelle ni localisation GPS.",
         ],
       ].map(([question, answer]) => (
         <details key={question}>
