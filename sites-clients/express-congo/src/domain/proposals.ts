@@ -41,29 +41,39 @@ export function proposalLines(
     if (!item || typeof item !== "object") return null;
     const { label, quantity, unit } = item as Record<string, unknown>;
     const name = typeof label === "string" ? label.trim() : "";
-    const qty = Number(quantity);
+    const qty = toThousandths(quantity);
     const unitMinor = toMinor(unit, currency);
     if (
       !name ||
       name.length > 160 ||
-      !Number.isInteger(qty) ||
-      qty < 1 ||
-      qty > 999 ||
+      qty === null ||
       unitMinor === null ||
       unitMinor <= 0n
     )
       return null;
-    const lineTotal = unitMinor * BigInt(qty);
+    // Quantité en millièmes (kilos décimaux) ; arrondi au plus proche.
+    const lineTotal = (unitMinor * qty + 500n) / 1000n;
     total += lineTotal;
     lines.push({
       label: name,
-      quantity: qty,
+      quantity: Number(qty) / 1000,
       unitMinor: unitMinor.toString(),
       totalMinor: lineTotal.toString(),
     });
   }
   if (total > 999_999_999_999n) return null;
   return { lines, totalMinor: total.toString() };
+}
+
+/** « 23,5 » → 23500 millièmes ; de 0,001 à 99 999,999. */
+export function toThousandths(value: unknown): bigint | null {
+  const text = String(value ?? "")
+    .trim()
+    .replace(/\s/g, "");
+  if (!/^\d{1,5}([.,]\d{1,3})?$/.test(text)) return null;
+  const [whole, fraction = ""] = text.split(/[.,]/);
+  const n = BigInt(whole) * 1000n + BigInt(fraction.padEnd(3, "0"));
+  return n > 0n ? n : null;
 }
 
 function safeParse(text: string): unknown {

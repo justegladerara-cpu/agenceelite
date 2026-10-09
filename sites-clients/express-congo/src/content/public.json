@@ -8,10 +8,7 @@
       "name": "Paris",
       "country": "France",
       "address": "67 boulevard de Belleville, 75011 Paris",
-      "phones": [
-        "+33148052220",
-        "+33762374792"
-      ],
+      "phones": ["+33148052220", "+33762374792"],
       "timezone": "Europe/Paris",
       "status": "OBSERVÉ",
       "validatedBy": null,
@@ -23,10 +20,7 @@
       "name": "Brazzaville",
       "country": "République du Congo",
       "address": "97 bis rue Djambala, Moungali, en venant par l’avenue Marien Ngouabi",
-      "phones": [
-        "+242056271674",
-        "+242065814481"
-      ],
+      "phones": ["+242056271674", "+242065814481"],
       "timezone": "Africa/Brazzaville",
       "status": "OBSERVÉ",
       "validatedBy": null,
@@ -38,10 +32,7 @@
       "name": "Pointe-Noire",
       "country": "République du Congo",
       "address": "Route de la Base, arrêt Entrée KM4, deuxième parcelle à droite du bar Dynastie",
-      "phones": [
-        "+242056271672",
-        "+242065814480"
-      ],
+      "phones": ["+242056271672", "+242065814480"],
       "timezone": "Africa/Brazzaville",
       "status": "OBSERVÉ",
       "validatedBy": null,
@@ -221,20 +212,14 @@
       "sections": [
         [
           "Éditeur",
-          "Express Congo — 67, boulevard de Belleville, 75011 Paris. Numéro d’immatriculation publié : 529 427 924 00012. Téléphone : +33 1 48 05 22 20. Email : expresscongo@yahoo.fr."
+          "Express Congo — siège social : 67, boulevard de Belleville, 75011 Paris. SIREN : 529 427 924 (établissement 529 427 924 00012). Code APE : 5229B (affrètement et organisation des transports). Téléphone : +33 1 48 05 22 20. Email : expresscongo@yahoo.fr."
         ],
-        [
-          "Directrice de la publication",
-          "Annie-Jésus Tsakala Massala."
-        ],
+        ["Directrice de la publication", "Annie-Jésus Tsakala Massala."],
         [
           "Hébergement",
           "Le site est hébergé par Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis. L’ancien site était hébergé par 1&1 IONOS, 7 place de la Gare, 57200 Sarreguemines."
         ],
-        [
-          "Réalisation",
-          "Conception et développement : Agence Élite."
-        ]
+        ["Réalisation", "Conception et développement : Agence Élite."]
       ]
     },
     {

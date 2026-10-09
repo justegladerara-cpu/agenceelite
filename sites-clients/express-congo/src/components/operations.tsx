@@ -23,6 +23,13 @@ import {
   fr,
 } from "./backoffice/labels";
 import { HBars, Columns } from "./backoffice/charts";
+import { pricedLines } from "@/content/tariffs";
+import { PaymentHub } from "./backoffice/payment-hub";
+import type {
+  PayInstruction,
+  PaymentSettings,
+  Provider,
+} from "@/server/payments";
 
 type Accounts = typeof demoAccounts;
 const errors: Record<string, string> = {
@@ -44,6 +51,13 @@ const errors: Record<string, string> = {
     "Transfert impossible : même agence, dossier clos, ou expédition déjà partie et pas encore arrivée.",
   CONFLICT:
     "Le dossier a été modifié entre-temps. Rechargez la page puis recommencez.",
+  PROPOSAL_NOT_ACCEPTED:
+    "Un encaissement ne s’enregistre que sur une proposition acceptée.",
+  INVALID_AMOUNT: "Saisissez un montant positif (125,50 en euros).",
+  METHOD_DISABLED:
+    "Ce moyen de paiement n’est pas activé dans le hub de paiement.",
+  PAYMENT_EXCEEDS:
+    "Ce montant dépasse le reste à encaisser sur cette proposition.",
 };
 
 function Pill({ value }: { value: unknown }) {
@@ -110,10 +124,35 @@ function LinesField({ id }: { id: string }) {
     const [w, f = ""] = t.split(/[.,]/);
     return Number(w + f.padEnd(places, "0"));
   };
+  // Quantité en millièmes : les kilos peuvent être décimaux (23,5).
+  const qty = (v: string) => {
+    const t = v.trim().replace(/\s/g, "");
+    if (!/^\d{1,5}([.,]\d{1,3})?$/.test(t)) return null;
+    const [w, f = ""] = t.split(/[.,]/);
+    const n = Number(w) * 1000 + Number(f.padEnd(3, "0"));
+    return n > 0 ? n : null;
+  };
   const lineTotal = (l: Line) => {
     const u = minor(l.unit),
-      q = Number(l.quantity);
-    return u !== null && Number.isInteger(q) && q > 0 ? u * q : null;
+      q = qty(l.quantity);
+    return u !== null && q !== null ? Math.round((u * q) / 1000) : null;
+  };
+  const addTariff = (key: string) => {
+    const t = pricedLines.find((x) => x.key === key);
+    if (!t || lines.length >= 20) return;
+    const unit = String(t.priceMinor / 100).replace(".", ",");
+    const line = {
+      label: t.label + (t.unit === "kg" ? " (au kg)" : ""),
+      quantity: "1",
+      unit,
+    };
+    // Remplace la ligne vide de départ plutôt que d’en ajouter une.
+    const blank = lines.findIndex((l) => !l.unit.trim());
+    setLines(
+      blank >= 0
+        ? lines.map((l, i) => (i === blank ? line : l))
+        : [...lines, line],
+    );
   };
   const total = lines.reduce((s, l) => s + (lineTotal(l) ?? 0), 0);
   const set = (i: number, patch: Partial<Line>) =>
@@ -163,7 +202,7 @@ function LinesField({ id }: { id: string }) {
               <input
                 aria-label={`Quantité ${i + 1}`}
                 value={l.quantity}
-                inputMode="numeric"
+                inputMode="decimal"
                 required
                 onChange={(e) => set(i, { quantity: e.target.value })}
               />
@@ -191,14 +230,30 @@ function LinesField({ id }: { id: string }) {
         })}
       </div>
       <div className="lines-foot">
-        <button
-          type="button"
-          className="text-button"
-          disabled={lines.length >= 20}
-          onClick={() => setLines([...lines, blankLine()])}
-        >
-          + Ajouter une ligne
-        </button>
+        <div className="lines-add">
+          <button
+            type="button"
+            className="text-button"
+            disabled={lines.length >= 20}
+            onClick={() => setLines([...lines, blankLine()])}
+          >
+            + Ajouter une ligne
+          </button>
+          {currency === "EUR" && (
+            <select
+              aria-label="Ajouter un tarif de la grille"
+              value=""
+              onChange={(e) => addTariff(e.target.value)}
+            >
+              <option value="">+ Tarif de la grille…</option>
+              {pricedLines.map((t) => (
+                <option key={t.key} value={t.key}>
+                  {t.label} — {t.hint}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
         <p className="lines-total">
           Total <b>{money(total, currency)}</b>
         </p>
@@ -777,6 +832,8 @@ export function Operations({
   entities,
   accounts,
   people = [],
+  payInstructions = [],
+  hub = null,
   code,
   quotes = [],
   audit = [],
@@ -785,6 +842,8 @@ export function Operations({
   entities: Entity[];
   accounts: Accounts;
   people?: Person[];
+  payInstructions?: PayInstruction[];
+  hub?: { settings: PaymentSettings; providers: Provider[] } | null;
   code: string;
   quotes?: QuoteView[];
   audit?: AuditView[];
@@ -848,7 +907,25 @@ export function Operations({
     departures = of("departure"),
     proposals = of("proposal"),
     events = of("event"),
-    tickets = of("ticket");
+    tickets = of("ticket"),
+    payments = of("payment");
+  /* Encaissé sur une proposition, en unités mineures. */
+  const paidFor = (id: string) =>
+    payments
+      .filter((x) => x.payload.proposalId === id)
+      .reduce((sum, x) => sum + Number(x.payload.amountMinor), 0);
+  const payState = (pr: Entity) => {
+    if (pr.payload.status !== "acceptee") return "";
+    const paid = paidFor(pr.id),
+      total = Number(pr.payload.totalMinor);
+    return paid >= total ? "payee" : paid > 0 ? "partiel" : "a-payer";
+  };
+  const methodNames: Record<string, string> = {
+    transfer: "Virement bancaire",
+    mtn: "MTN Mobile Money",
+    airtel: "Airtel Money",
+    cash: "Espèces en agence",
+  };
   const email = (id: string) => people.find((a) => a.id === id)?.email || "—";
   const clientAccounts = people.filter((a) => a.role === "client");
   const clients = clientAccounts.map((a) => ({ value: a.id, label: a.email }));
@@ -1088,6 +1165,44 @@ export function Operations({
             { name: "reason", label: "Motif du transfert" },
           ],
         },
+      can("admin", "finance") &&
+        proposals.some((x) => payState(x) && payState(x) !== "payee") && {
+          key: "recordPayment",
+          title: "Enregistrer un encaissement",
+          hint: "Saisissez le montant effectivement reçu ; il ne peut pas dépasser le reste à encaisser.",
+          command: "recordPayment",
+          fields: [
+            pick(
+              "proposalId",
+              "Proposition acceptée",
+              proposals.filter((x) => payState(x) && payState(x) !== "payee"),
+            ),
+            { name: "amount", label: "Montant reçu", type: "decimal" },
+            {
+              name: "method",
+              label: "Moyen",
+              options: payInstructions.filter((m) => m.method !== "note").length
+                ? payInstructions
+                    .filter((m) => m.method !== "note")
+                    .map((m) => ({
+                      value: m.method,
+                      label: m.title,
+                    }))
+                : [{ value: "", label: "Aucun moyen activé dans le hub" }],
+            },
+            {
+              name: "reference",
+              label: "Référence (virement, transaction…)",
+              optional: true,
+            },
+            {
+              name: "receivedAt",
+              label: "Reçu le",
+              type: "date",
+              value: new Date().toISOString().slice(0, 10),
+            },
+          ],
+        },
       {
         key: "ticket",
         title: "Nouvelle demande d’assistance",
@@ -1145,6 +1260,21 @@ export function Operations({
           ? ([["departure", "Départs", departures.length]] as Item[])
           : []),
         ["event", "Historique", events.length],
+      ],
+    ],
+    [
+      "Finance",
+      [
+        ...(can("admin", "finance", "client")
+          ? ([
+              [
+                "payment",
+                actor.role === "client" ? "Mes paiements" : "Encaissements",
+                payments.length,
+              ],
+            ] as Item[])
+          : []),
+        ...(hub ? ([["hub", "Hub de paiement", null]] as Item[]) : []),
       ],
     ],
     [
@@ -1402,7 +1532,15 @@ export function Operations({
         };
       case "proposal":
         return {
-          head: ["Numéro", "Client", "Version", "Montant", "Validité", "État"],
+          head: [
+            "Numéro",
+            "Client",
+            "Version",
+            "Montant",
+            "Validité",
+            "État",
+            "Règlement",
+          ],
           rows: list.map((e) => {
             const p = e.payload;
             const v = [
@@ -1412,6 +1550,7 @@ export function Operations({
               money(Number(p.totalMinor), String(p.currency)),
               String(p.validUntil ?? "—"),
               stateLabel(p.status),
+              payState(e) ? stateLabel(payState(e)) : "—",
             ];
             return base(e, v, [
               ref(p.number),
@@ -1420,7 +1559,41 @@ export function Operations({
               v[3],
               v[4],
               pill(p.status),
+              payState(e) ? <Pill key="pay" value={payState(e)} /> : "—",
             ]);
+          }),
+        };
+      case "payment":
+        return {
+          head: [
+            "Reçu le",
+            "Proposition",
+            "Client",
+            "Moyen",
+            "Montant",
+            "Référence",
+          ],
+          rows: list.map((e) => {
+            const p = e.payload;
+            const v = [
+              date(p.receivedAt, e.agency, false),
+              String(p.proposalNumber ?? "—"),
+              email(e.owner),
+              methodNames[String(p.method)] || String(p.method),
+              money(Number(p.amountMinor), String(p.currency)),
+              String(p.reference || "—"),
+            ];
+            return {
+              ...base(e, v, [
+                v[0],
+                ref(v[1]),
+                v[2],
+                v[3],
+                <b key="m">{v[4]}</b>,
+                v[5],
+              ]),
+              at: String(p.receivedAt),
+            };
           }),
         };
       case "event":
@@ -2019,7 +2192,7 @@ export function Operations({
               ["Client", email(e.owner)],
               ["Version", "v" + String(p.version)],
               ["Montant", money(Number(p.totalMinor), String(p.currency))],
-              ["Valable jusqu’au", String(p.validUntil ?? "—")],
+              ["Valable jusqu’au", date(p.validUntil, e.agency, false)],
               [
                 "Acceptée le",
                 p.acceptedAt ? date(p.acceptedAt, e.agency) : "—",
@@ -2048,7 +2221,9 @@ export function Operations({
                     ).map((l, i) => (
                       <tr key={i}>
                         <td>{l.label}</td>
-                        <td>{l.quantity}</td>
+                        <td>
+                          {fr(Number(l.quantity), 3).replace(/,?0+$/, "")}
+                        </td>
                         <td>
                           {money(Number(l.unitMinor), String(p.currency))}
                         </td>
@@ -2069,6 +2244,70 @@ export function Operations({
             )}
             <h3>Conditions, inclusions et exclusions</h3>
             <p>{String(p.exclusions ?? "—")}</p>
+            {p.status === "acceptee" && (
+              <div className="pay-box">
+                <div className="pay-head">
+                  <div>
+                    <span className="eyebrow">Règlement</span>
+                    <b>
+                      {money(paidFor(e.id), String(p.currency))} encaissé sur{" "}
+                      {money(Number(p.totalMinor), String(p.currency))}
+                    </b>
+                  </div>
+                  <Pill value={payState(e)} />
+                </div>
+                <div className="pay-bar" aria-hidden>
+                  <i
+                    style={{
+                      width:
+                        Math.min(
+                          100,
+                          (paidFor(e.id) / Number(p.totalMinor)) * 100,
+                        ) + "%",
+                    }}
+                  />
+                </div>
+                {payState(e) !== "payee" && payInstructions.length > 0 && (
+                  <>
+                    <p className="hint">
+                      Référence à indiquer avec le paiement :{" "}
+                      <b className="ref">{String(p.number)}</b>
+                    </p>
+                    <ul className="pay-methods">
+                      {payInstructions.map((m) => (
+                        <li key={m.method}>
+                          <strong>{m.title}</strong>
+                          {m.lines.map((l) => (
+                            <span key={l}>{l}</span>
+                          ))}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {payState(e) !== "payee" && !payInstructions.length && (
+                  <p className="hint">
+                    Les moyens de paiement seront communiqués par l’agence.
+                  </p>
+                )}
+                {hasTask("recordPayment") && payState(e) !== "payee" && (
+                  <button
+                    className="button small"
+                    onClick={() =>
+                      openTask("recordPayment", {
+                        proposalId: e.id,
+                        amount: String(
+                          (Number(p.totalMinor) - paidFor(e.id)) /
+                            (p.currency === "EUR" ? 100 : 1),
+                        ).replace(".", ","),
+                      })
+                    }
+                  >
+                    Enregistrer un encaissement
+                  </button>
+                )}
+              </div>
+            )}
             <div className="drawer-actions">
               <a
                 className="button secondary small"
@@ -2676,7 +2915,15 @@ export function Operations({
         {view === "dashboard" && dashboard()}
         {view === "reports" && reports()}
         {view === "audit" && auditView()}
-        {!["dashboard", "reports", "audit"].includes(view) && listView(view)}
+        {view === "hub" && hub && (
+          <PaymentHub
+            initial={hub.settings}
+            providers={hub.providers}
+            canEdit={actor.role === "admin"}
+          />
+        )}
+        {!["dashboard", "reports", "audit", "hub"].includes(view) &&
+          listView(view)}
       </section>
       {detailView()}
     </div>

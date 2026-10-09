@@ -1,5 +1,5 @@
 import { randomUUID, randomBytes } from "node:crypto";
-import { db } from "./database";
+import { db, guardedBatch, REQUIRE_CHANGE } from "./database";
 import {
   Actor,
   Entity,
@@ -8,7 +8,8 @@ import {
   shipmentTransition,
 } from "@/domain/operations";
 import { ParcelInput, validateParcel } from "@/domain/measurements";
-import { proposalLines } from "@/domain/proposals";
+import { proposalLines, toMinor } from "@/domain/proposals";
+import { getPaymentSettings, enabledMethods } from "./payments";
 type Row = {
   id: string;
   kind: string;
@@ -138,6 +139,7 @@ async function perform(
     ticket: "ticket",
     replyTicket: "ticket",
     confirmDeparture: "departure",
+    recordPayment: "payment",
     transferShipment: "shipment",
   };
   if (domains[command] && !canWrite(actor, domains[command]))
@@ -246,14 +248,48 @@ async function perform(
       parcels.some((p) => p.priceReviewRequired && !p.priceReviewApproved)
     )
       throw new Error("REVIEW_REQUIRED");
-    await replace(actor, shipment, {
-      ...shipment.payload,
-      departure: departure.id,
-    });
-    await replace(actor, departure, {
-      ...departure.payload,
-      shipments: [...(departure.payload.shipments as string[]), shipment.id],
-    });
+    // Expédition et départ modifiés d’un seul bloc : si l’un des deux a
+    // changé depuis sa lecture, rien n’est enregistré.
+    const UPDATE =
+      "UPDATE entities SET payload=?,revision=revision+1 WHERE id=? AND revision=?";
+    await guardedBatch([
+      [
+        UPDATE,
+        [
+          JSON.stringify({ ...shipment.payload, departure: departure.id }),
+          shipment.id,
+          shipment.revision,
+        ],
+      ],
+      REQUIRE_CHANGE,
+      [
+        UPDATE,
+        [
+          JSON.stringify({
+            ...departure.payload,
+            shipments: [
+              ...(departure.payload.shipments as string[]),
+              shipment.id,
+            ],
+          }),
+          departure.id,
+          departure.revision,
+        ],
+      ],
+      REQUIRE_CHANGE,
+      [
+        AUDIT,
+        auditParams(actor, "shipment.updated", shipment.id, {
+          revision: shipment.revision + 1,
+        }),
+      ],
+      [
+        AUDIT,
+        auditParams(actor, "departure.updated", departure.id, {
+          revision: departure.revision + 1,
+        }),
+      ],
+    ]);
     return { ok: true };
   }
   if (command === "approveMeasures") {
@@ -375,6 +411,49 @@ async function perform(
     await audit(actor, "proposal.accepted", proposal.id, {});
     return { ok: true, payment: "non-confirme" };
   }
+  if (command === "recordPayment") {
+    if (!["admin", "finance"].includes(actor.role))
+      throw new Error("ACCESS_DENIED");
+    const proposal = await getEntity(actor, text(input.proposalId, 100));
+    if (proposal.kind !== "proposal" || proposal.payload.status !== "acceptee")
+      throw new Error("PROPOSAL_NOT_ACCEPTED");
+    const currency = String(proposal.payload.currency);
+    const amount = toMinor(input.amount, currency);
+    const method = String(input.method);
+    const allowed = enabledMethods(await getPaymentSettings());
+    if (amount === null || amount <= 0n) throw new Error("INVALID_AMOUNT");
+    if (!allowed.includes(method as (typeof allowed)[number]))
+      throw new Error("METHOD_DISABLED");
+    const receivedAt = String(input.receivedAt || "").slice(0, 10);
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(receivedAt) ||
+      !Number.isFinite(Date.parse(receivedAt))
+    )
+      throw new Error("INVALID_INPUT");
+    // Le total déjà encaissé ne peut pas dépasser le montant accepté.
+    const paid = (
+      await (
+        await db()
+      ).all<{ payload: string }>(
+        "SELECT payload FROM entities WHERE kind='payment' AND json_extract(payload,'$.proposalId')=?",
+        proposal.id,
+      )
+    ).reduce((sum, r) => sum + BigInt(JSON.parse(r.payload).amountMinor), 0n);
+    if (paid + amount > BigInt(String(proposal.payload.totalMinor)))
+      throw new Error("PAYMENT_EXCEEDS");
+    return await put(actor, "payment", proposal.owner, proposal.agency, {
+      proposalId: proposal.id,
+      proposalNumber: proposal.payload.number,
+      amountMinor: amount.toString(),
+      currency,
+      method,
+      reference: String(input.reference || "")
+        .trim()
+        .slice(0, 120),
+      receivedAt,
+      recordedBy: actor.id,
+    });
+  }
   if (command === "confirmDeparture") {
     if (!["admin", "manager", "agent"].includes(actor.role))
       throw new Error("ACCESS_DENIED");
@@ -427,31 +506,29 @@ async function perform(
         ["parcel", "event", "document"].includes(e.kind),
     );
     const before = shipment.agency;
-    const result = await (
-      await db()
-    ).run(
-      "UPDATE entities SET agency=?,revision=revision+1,payload=? WHERE id=? AND revision=?",
-      agency,
-      JSON.stringify({
-        ...shipment.payload,
-        transfers: [
-          ...((shipment.payload.transfers as unknown[]) || []),
-          {
-            from: before,
-            to: agency,
-            reason,
-            by: actor.id,
-            at: new Date().toISOString(),
-          },
+    await guardedBatch([
+      [
+        "UPDATE entities SET agency=?,revision=revision+1,payload=? WHERE id=? AND revision=?",
+        [
+          agency,
+          JSON.stringify({
+            ...shipment.payload,
+            transfers: [
+              ...((shipment.payload.transfers as unknown[]) || []),
+              {
+                from: before,
+                to: agency,
+                reason,
+                by: actor.id,
+                at: new Date().toISOString(),
+              },
+            ],
+          }),
+          shipment.id,
+          shipment.revision,
         ],
-      }),
-      shipment.id,
-      shipment.revision,
-    );
-    if (!result.changes) throw new Error("CONFLICT");
-    await (
-      await db()
-    ).batch([
+      ],
+      REQUIRE_CHANGE,
       ...related.map(
         (e) =>
           ["UPDATE entities SET agency=? WHERE id=?", [agency, e.id]] as [

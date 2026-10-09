@@ -1,6 +1,7 @@
 import { currentActor } from "@/server/demo-auth";
 import { getEntity } from "@/server/operations-repository";
 import { textPdf } from "@/server/pdf";
+import { getPaymentSettings, instructionsFor } from "@/server/payments";
 export async function GET(request: Request) {
   const actor = await currentActor();
   if (!actor) return new Response(null, { status: 401 });
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
             "Detail",
             ...lines.map(
               (l) =>
-                `- ${l.label} : ${l.quantity} x ${amount(l.unitMinor)} = ${amount(l.totalMinor)}`,
+                `- ${l.label} : ${String(l.quantity).replace(".", ",")} x ${amount(l.unitMinor)} = ${amount(l.totalMinor)}`,
             ),
             "",
           ]
@@ -44,6 +45,16 @@ export async function GET(request: Request) {
       "",
       "Conditions, inclusions et exclusions : " + p.exclusions,
       "",
+      ...(await (async () => {
+        const how = instructionsFor(await getPaymentSettings(), (a) => a);
+        return how.length
+          ? [
+              "Reglement - reference a indiquer : " + p.number,
+              ...how.flatMap((m) => [m.title, ...m.lines.map((l) => "  " + l)]),
+              "",
+            ]
+          : [];
+      })()),
       "Etat : " + p.status,
       "Une acceptation ne confirme aucun paiement.",
     ]);

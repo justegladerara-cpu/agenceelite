@@ -1,5 +1,12 @@
 # Rapport de vérification — 9 octobre 2026
 
+## Soir du 9 octobre 2026
+
+- `npm run check` : **31 tests** (ajouts : lot gardé annulé en entier, hub de paiement — IBAN, droits, plafond des encaissements, clés jamais renvoyées).
+- `npx playwright test` : **15 scénarios**, rejouables sur une base remplie (ajout : tarifs, estimation 23,5 kg = 305,50 €, hub, moyens affichés au client).
+- `npm audit --omit=dev` : 0 vulnérabilité. `npx prettier --check .` : conforme. `npm run cf:build` réussi ; Worker local : hub 200, transfert 201, PDF 200.
+- Parcours automatique de toutes les pages publiques et des vues de gestion (administrateur et client) : aucune erreur console, aucune exception, aucune réponse 4xx/5xx inattendue.
+
 ## Reprise du 9 octobre 2026 (Linux, Node.js 22.22, Chromium 153 via PLAYWRIGHT_EXECUTABLE)
 
 - `npm run check` : TypeScript, ESLint et **29 tests** réussis (5 nouveaux : montants exacts, proposition détaillée, inscription/confirmation/réinitialisation, suivi public sans donnée personnelle, confirmation de départ et transfert d’agence).

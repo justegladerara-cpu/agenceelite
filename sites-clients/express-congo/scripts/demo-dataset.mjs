@@ -268,6 +268,61 @@ await clientA("ticket", {
 const clientB = await session("client-b@example.invalid");
 await clientB("acceptProposal", { proposalId: proposals[2].id });
 
+// Hub de paiement : coordonnées FICTIVES (IBAN d’exemple ISO, numéro +242 de test).
+{
+  const ctx = await request.newContext({ baseURL: base });
+  const st = await (await ctx.get("/api/demo/session")).json();
+  await ctx.post("/api/demo/session", {
+    headers,
+    data: {
+      email: "admin@example.invalid",
+      password: "DemoExpress!2026",
+      code: st.secondStep,
+    },
+  });
+  const r = await ctx.post("/api/demo/payments", {
+    headers,
+    data: {
+      transfer: {
+        enabled: true,
+        holder: "Express Congo (démonstration)",
+        iban: "FR76 3000 6000 0112 3456 7890 189",
+        bic: "AGRIFRPP",
+        bank: "Banque fictive",
+      },
+      mtn: {
+        enabled: true,
+        number: "+242060000000",
+        name: "EXPRESS CONGO DEMO",
+      },
+      airtel: { enabled: false, number: "", name: "" },
+      cash: {
+        enabled: true,
+        agencies: ["paris", "brazzaville", "pointe-noire"],
+      },
+      instructions:
+        "Indiquez le numéro de proposition dans le libellé du paiement (démonstration).",
+    },
+  });
+  if (!r.ok()) throw new Error("Hub de paiement : " + (await r.text()));
+}
+// Un encaissement complet et un partiel, comme le ferait la finance.
+const toEur = (minor) => String(minor / 100).replace(".", ",");
+await admin("recordPayment", {
+  proposalId: proposals[0].id,
+  amount: toEur(Number(proposals[0].payload.totalMinor)),
+  method: "transfer",
+  reference: "VIR-DEMO-001",
+  receivedAt: new Date().toISOString().slice(0, 10),
+});
+await admin("recordPayment", {
+  proposalId: proposals[1].id,
+  amount: "500",
+  method: "mtn",
+  reference: "MOMO-DEMO-002",
+  receivedAt: new Date().toISOString().slice(0, 10),
+});
+
 // Demandes web envoyées par le formulaire public.
 const web = await request.newContext({ baseURL: base });
 const quotes = [

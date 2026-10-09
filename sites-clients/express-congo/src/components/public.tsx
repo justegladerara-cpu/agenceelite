@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { content, observed, formatPhone } from "@/content";
 import { production } from "@/config";
+import { tariffs, euros, fromPrice } from "@/content/tariffs";
 export function ServiceCards() {
   return (
     <div className="three-col">
@@ -14,7 +15,7 @@ export function ServiceCards() {
           <p>{s.intro}</p>
           <div className="service-meta">
             {s.formats}
-            <span>Selon devis</span>
+            <span>{fromPrice[s.key] || "Sur devis"}</span>
           </div>
           <Link href={"/services/" + s.slug}>
             Découvrir la solution <span aria-hidden>↗</span>
@@ -55,7 +56,7 @@ export function FAQ() {
         ],
         [
           "Puis-je obtenir un prix avec le volume ?",
-          "Le volume décrit votre envoi. Les tarifs non validés restent sur devis ; aucune estimation automatique n’est activée.",
+          "Oui pour le groupage maritime : la grille indique 800 € pour 1 m³ ; au-delà, sur devis. En aérien, le prix dépend du poids (13 € TTC le kg) ou du nombre d’unités (10 € TTC le courrier ou le téléphone).",
         ],
         [
           "La douane est-elle toujours incluse ?",
@@ -268,5 +269,56 @@ export function RouteMap() {
         </g>
       ))}
     </svg>
+  );
+}
+
+/* Grille tarifaire officielle, une carte par solution. */
+export function TariffTables() {
+  return (
+    <div className="tariff-grid">
+      {tariffs.map((s) => (
+        <section className="tariff-card card" key={s.service}>
+          <header>
+            <span className="eyebrow">{s.subtitle}</span>
+            <h2>{s.title}</h2>
+          </header>
+          {s.groups.map((g) => (
+            <table className="tariff-table" key={g.title}>
+              <caption>{g.title}</caption>
+              {g.unitLabel && (
+                <thead>
+                  <tr>
+                    <th scope="col">Prestation</th>
+                    <th scope="col">{g.unitLabel}</th>
+                  </tr>
+                </thead>
+              )}
+              <tbody>
+                {g.lines.map((l) => (
+                  <tr key={l.key}>
+                    <th scope="row">{l.label}</th>
+                    <td className={l.priceMinor === null ? "on-quote" : ""}>
+                      {l.priceMinor === null
+                        ? "Sur devis"
+                        : euros(l.priceMinor)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              {g.note && (
+                <tfoot>
+                  <tr>
+                    <td colSpan={2}>{g.note}</td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          ))}
+          <Link href={"/devis?service=" + s.service}>
+            Demander un devis {s.title.toLowerCase()} →
+          </Link>
+        </section>
+      ))}
+    </div>
   );
 }

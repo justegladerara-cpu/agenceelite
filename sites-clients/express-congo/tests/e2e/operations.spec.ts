@@ -137,6 +137,8 @@ test("demandes web : traitement contrôlé côté serveur et tableau de bord", a
   playwright,
 }) => {
   const origin = process.env.BASE_URL || "http://127.0.0.1:3000";
+  // Nom unique : le test peut être rejoué sur une base déjà remplie.
+  const name = "Client Gestion Test " + Date.now();
   const created = await request.post("/api/devis", {
     headers: {
       Origin: origin,
@@ -162,7 +164,7 @@ test("demandes web : traitement contrôlé côté serveur et tableau de bord", a
         desiredDate: "",
         agency: "paris",
         city: "Ville fictive",
-        name: "Client Gestion Test",
+        name,
         email: "gestion@example.invalid",
         phone: "+33000000000",
         channel: "email",
@@ -190,7 +192,7 @@ test("demandes web : traitement contrôlé côté serveur et tableau de bord", a
   }
   const admin = await as("admin@example.invalid");
   const html = await (await admin.get("/demo/")).text();
-  expect(html).toContain("Client Gestion Test");
+  expect(html).toContain(name);
   // L’identifiant est lu depuis la page rendue pour l’administrateur.
   const { reference } = await created.json();
   const id = new RegExp(
@@ -224,7 +226,7 @@ test("demandes web : traitement contrôlé côté serveur et tableau de bord", a
   ).toBeVisible();
   await expect(page.getByText("Expéditions par étape")).toBeVisible();
   await page.getByRole("button", { name: "Demandes web", exact: true }).click();
-  await page.getByRole("row", { name: /Client Gestion Test/ }).click();
+  await page.getByRole("row", { name: new RegExp(name) }).click();
   await expect(page.getByRole("dialog")).toContainText("En étude");
   await expect(
     page.getByRole("button", { name: "Passer à « Proposition envoyée »" }),
@@ -299,4 +301,100 @@ test("inscription simulée, suivi public et proposition détaillée", async ({
   );
   await expect(visitor.locator("body")).not.toContainText(email);
   await visitor.close();
+});
+
+test("tarifs publiés, hub de paiement et encaissement", async ({
+  page,
+  request,
+}) => {
+  test.setTimeout(60000);
+  const origin = process.env.BASE_URL || "http://127.0.0.1:3000";
+  // Grille publique et estimation du fret aérien au kilo.
+  await page.goto("/tarifs/");
+  await expect(page.locator(".tariff-grid")).toContainText("800");
+  await page.getByLabel("Poids total (kg)").fill("23,5");
+  await expect(page.locator(".estimator-result")).toContainText("305,50");
+  expect(
+    (
+      await request.get("/documents/grille-tarifaire-express-congo.pdf")
+    ).status(),
+  ).toBe(200);
+
+  // Le hub est réservé : refusé sans session et à un client.
+  expect((await request.get("/api/demo/payments")).status()).toBe(403);
+  const session = await (await request.get("/api/demo/session")).json();
+  await request.post("/api/demo/session", {
+    headers: { Origin: origin },
+    data: {
+      email: "admin@example.invalid",
+      password: "DemoExpress!2026",
+      code: session.secondStep,
+    },
+  });
+  const bad = await request.post("/api/demo/payments", {
+    headers: { Origin: origin },
+    data: { transfer: { enabled: true, holder: "X", iban: "FR00 1234" } },
+  });
+  expect(bad.status()).toBe(422);
+  expect((await bad.json()).problems.join(" ")).toContain("IBAN");
+  const ok = await request.post("/api/demo/payments", {
+    headers: { Origin: origin },
+    data: {
+      transfer: {
+        enabled: true,
+        holder: "Express Congo (test)",
+        iban: "FR7630006000011234567890189",
+      },
+      cash: { enabled: true, agencies: ["paris"] },
+    },
+  });
+  expect(ok.status()).toBe(200);
+
+  // Proposition acceptée puis encaissement total par la finance (admin ici).
+  const cmd = async (command: string, data: Record<string, unknown>) => {
+    const r = await request.post("/api/demo/operations", {
+      headers: { Origin: origin },
+      data: { command, ...data },
+    });
+    expect(r.status(), await r.text()).toBe(201);
+    return r.json();
+  };
+  const s = await cmd("newShipment", {
+    owner: "client-demo-a",
+    agency: "paris",
+    service: "aerien",
+    destination: "Brazzaville",
+  });
+  const p = await cmd("proposal", {
+    shipmentId: s.id,
+    currency: "EUR",
+    lines: JSON.stringify([
+      { label: "Fret aérien", quantity: "23,5", unit: "13" },
+    ]),
+    exclusions: "Essai",
+    validUntil: "2099-01-01",
+  });
+  expect(p.payload.totalMinor).toBe("30550");
+  const client = await (await request.get("/api/demo/session")).json();
+  await request.post("/api/demo/session", {
+    headers: { Origin: origin },
+    data: {
+      email: "client-a@example.invalid",
+      password: "DemoExpress!2026",
+      code: client.secondStep,
+    },
+  });
+  expect((await request.get("/api/demo/payments")).status()).toBe(403);
+  await cmd("acceptProposal", { proposalId: p.id });
+  await page.context().addCookies((await request.storageState()).cookies);
+  await page.goto("/demo/");
+  await page.getByRole("button", { name: "Propositions", exact: true }).click();
+  // Numéro unique : le test reste rejouable sur une base déjà remplie.
+  await page
+    .locator(".data-table tbody tr", {
+      hasText: String(p.payload.number).slice(0, 16),
+    })
+    .click();
+  await expect(page.locator(".pay-box")).toContainText("FR76 3000");
+  await expect(page.locator(".pay-box")).toContainText(p.payload.number);
 });

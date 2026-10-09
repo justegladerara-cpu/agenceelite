@@ -10,7 +10,10 @@ import {
   AgencyCards,
   FAQ,
   MeasureDiagram,
+  TariffTables,
 } from "@/components/public";
+import { TariffEstimator } from "@/components/tariff-estimator";
+import { tariffSource, fromPrice } from "@/content/tariffs";
 import { CTA } from "@/components/shell";
 import { TrackingForm } from "@/components/tracking";
 import { trackingEnabled } from "@/server/tracking";
@@ -20,7 +23,7 @@ export const dynamic = "force-dynamic";
 const titles: Record<string, string> = {
   services: "Nos solutions de fret",
   devis: "Décrivez votre envoi",
-  tarifs: "Tarifs et conditions",
+  tarifs: "Tarifs",
   suivi: "Suivre une expédition",
   "prendre-les-mesures": "Bien mesurer. Mieux préparer.",
   agences: "Nos agences",
@@ -30,6 +33,8 @@ const titles: Record<string, string> = {
   "espace-client": "Votre espace client",
 };
 const subtitles: Record<string, string> = {
+  tarifs:
+    "La grille d’Express Congo : fret aérien au kilo ou à l’unité, groupage maritime au mètre cube, conteneurs sur devis.",
   suivi:
     "Consultez les étapes de votre envoi avec la référence et le code de suivi remis par votre agence.",
   contact:
@@ -110,9 +115,7 @@ export default async function Page({
             <ServiceCards />
             <div className="table-wrap">
               <table>
-                <caption>
-                  Comparer les solutions — conditions à confirmer
-                </caption>
+                <caption>Comparer les solutions</caption>
                 <thead>
                   <tr>
                     <th>Solution</th>
@@ -127,7 +130,11 @@ export default async function Page({
                       <th>{s.name}</th>
                       <td>{s.formats}</td>
                       <td>{s.criterion}</td>
-                      <td>Selon devis</td>
+                      <td>
+                        <Link href="/tarifs">
+                          {fromPrice[s.key] || "Sur devis"}
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -183,31 +190,35 @@ export default async function Page({
           <QuoteForm professional={path === "professionnels"} />
         )}
         {path === "tarifs" && (
-          <div className="reading">
-            <h2>Un prix étudié pour votre envoi</h2>
-            <p>
-              Le moteur d’estimation est désactivé. Les unités, frais, paliers
-              et prestations douanières de la grille source nécessitent une
-              validation.
-            </p>
-            <div className="notice">
-              <strong>Devis nécessaire</strong>
-              <p>
-                Aucun prix nul ni estimation automatique n’est proposé. La
-                proposition doit détailler le transport, les frais, les options
-                et les exclusions.
+          <>
+            <TariffEstimator />
+            <TariffTables />
+            <div className="tariff-foot">
+              <div>
+                <h2>Ce que comprennent les prix</h2>
+                <p>
+                  Les prix sont indiqués en euros TTC, au départ de Paris vers
+                  la République du Congo. Les droits et taxes à destination, le
+                  fret sans douane et les volumes au-delà de la grille font
+                  l’objet d’un devis. Chaque proposition détaille les
+                  prestations incluses et exclues avant le dépôt.
+                </p>
+                <div className="actions">
+                  <Link className="button" href="/devis">
+                    Demander un devis
+                  </Link>
+                  <a className="plain-link" href={tariffSource.pdf} download>
+                    Télécharger la grille (PDF) ↓
+                  </a>
+                </div>
+              </div>
+              <p className="source-note">
+                Grille tarifaire transmise par Express Congo le 9 octobre 2026.
+                Conditions générales applicables : voir les{" "}
+                <Link href="/cgv">conditions générales de vente</Link>.
               </p>
             </div>
-            <h2>La grille PDF</h2>
-            <p>
-              Aucune version tarifaire n’est validée pour le nouveau site. Le
-              PDF observé est archivé dans le dépôt comme source de travail et
-              n’est pas publié comme offre applicable.
-            </p>
-            <Link className="button" href="/devis">
-              Demander un devis
-            </Link>
-          </div>
+          </>
         )}
         {path === "suivi" &&
           (trackingEnabled() ? (

@@ -1,4 +1,4 @@
-# Passation — état réel au 9 octobre 2026
+# Passation — état réel au 9 octobre 2026 (soir)
 
 Le projet n’est **pas une plateforme de production terminée**. Le site public et un noyau opérationnel fonctionnent localement en démonstration. Aucun domaine, WordPress, compte prestataire ou hébergement public n’a été modifié. Cette livraison s’arrête à un état testable pour la reprise demandée au §19 ; ne pas confondre démonstration et raccordement de production.
 
@@ -61,9 +61,22 @@ Vérifié : `npm run check` (29 tests), `npm run build`, `npm run cf:build`, 14 
 
 Reste hors de portée sans prestataire : envoi réel des emails, MFA de production, paiement, notifications, analyse antivirus des pièces, base et authentification de production (EC-022, EC-025, EC-027). Workflow éditorial d’approbation non modifié.
 
+## Grille tarifaire et hub de paiement (Claude, 9 octobre 2026, soir)
+
+- **Grille tarifaire** transmise par le client (identique au PDF du site officiel, SHA-256 `c403eba4…`) : source unique `src/content/tariffs.ts`. Page `/tarifs` avec tableaux par solution, estimation du fret aérien au kilo ou à l’unité, PDF officiel téléchargeable (`public/documents/`). Cartes de services : « Dès 10 € TTC », « 800 € le m³ », « Sur devis ». Les tarifs chiffrés s’ajoutent en un clic dans une proposition. Lecture retenue pour la ligne maritime « 800 » sous l’en-tête « Prix € / Kg » : 800 € pour 1 m³ (à faire confirmer, EC-012). Les anciennes adresses du PDF redirigent toujours vers `/tarifs`.
+- **Quantités décimales** dans les propositions (23,5 kg), calcul entier en millièmes, arrondi au centime.
+- **Hub de paiement** (gestion → Finance → Hub de paiement ; modification par l’administrateur, consultation par la finance) :
+  - moyens hors ligne : compte bancaire (titulaire, IBAN contrôlé par clé ISO 13616, BIC), MTN Mobile Money et Airtel Money (numéro marchand +242), espèces par agence, message libre ; stockés dans la table `settings` ; le journal ne garde que la liste des moyens actifs, jamais les coordonnées ;
+  - le client voit ces moyens sur chaque proposition acceptée, avec le numéro comme référence de paiement ; ils figurent aussi sur le PDF ;
+  - paiement en ligne : emplacements Stripe (carte), API MTN MoMo et Airtel Money ; les clés ne sont jamais saisies dans l’application mais déposées comme secrets du Worker Cloudflare ; le hub indique seulement « Non connecté / Clés incomplètes / Clés détectées ». La création de paiement et la confirmation par webhook restent à brancher une fois le prestataire choisi (EC-022).
+- **Encaissements** (`recordPayment`, administrateur ou finance) : uniquement sur proposition acceptée, moyen activé dans le hub, total plafonné au montant accepté. États « À encaisser / Partiellement réglée / Réglée », barre de progression, liste « Encaissements » (« Mes paiements » pour le client), export CSV.
+- **Corrections** : affectation à un départ et transfert d’agence désormais atomiques sur D1 (lot unique avec garde de révision `REQUIRE_CHANGE`) ; wrangler 4.149.0 (0 vulnérabilité, `npm audit --omit=dev`) ; `.prettierignore` pour exclure les fichiers générés (le contrôle Prettier passe) ; tests navigateur rejouables sur une base déjà remplie.
+
+Vérifié : 31 tests métier, 15 scénarios navigateur, build Next et OpenNext, Worker local (hub 200, transfert 201, PDF 200), parcours de toutes les pages et vues de gestion sans erreur console.
+
 ## Dernières vérifications
 
-`npm run check` : types, lint et **29 tests métier/intégration locaux réussis**. `npm run test:e2e` : build optimisé de démonstration et **14 scénarios navigateur réussis**, dont réception → départ → remise, accès inter-clients/inter-agences, PDF, QR et manifeste. Voir TEST_REPORT.md pour les commandes, corrections et limites.
+`npm run check` : types, lint et **31 tests métier/intégration locaux réussis**. `npm run test:e2e` : build optimisé de démonstration et **15 scénarios navigateur réussis**, dont réception → départ → remise, accès inter-clients/inter-agences, PDF, QR et manifeste. Voir TEST_REPORT.md pour les commandes, corrections et limites.
 
 ## Prochaines étapes ordonnées
 
@@ -81,5 +94,5 @@ Reste hors de portée sans prestataire : envoi réel des emails, MFA de producti
 - Les PDF de propositions sont textuels simples, en ASCII, sans validation du modèle juridique/commercial. Ne pas les envoyer comme offres réelles.
 - Les champs de mesures contrôlées sont complets côté API ; l’UI de réception ne propose pour l’instant que le poids contrôlé et reprend les dimensions déclarées.
 - Les mots de passe d’exemple, données fictives et mots de passe Docker locaux ne sont pas des secrets de production.
-- Audit npm : 0 vulnérabilité signalée dans les dépendances de production ; 5 alertes élevées dans la chaîne de lint liée à fast-glob/braces/micromatch, sans correctif compatible proposé. Ne pas rétrograder automatiquement eslint-config-next avec --force. À revoir avant la suite.
+- Audit npm : 0 vulnérabilité dans les dépendances de production (wrangler passé en 4.149.0 le 9 octobre 2026 pour corriger sharp).
 - Les captures sont des artefacts documentés, les bases et sauvegardes sont ignorées. Les fichiers .lockfile/.pnpm_modules sont des outils temporaires locaux ignorés, inutiles sur une machine possédant npm standard.

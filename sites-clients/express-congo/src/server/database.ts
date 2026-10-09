@@ -26,6 +26,7 @@ export const schema = [
   "CREATE TABLE IF NOT EXISTS auth_tokens (hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES demo_users(id), purpose TEXT NOT NULL, expires_at INTEGER NOT NULL)",
   "CREATE TABLE IF NOT EXISTS assignments (parcel_id TEXT PRIMARY KEY REFERENCES entities(id), shipment_id TEXT NOT NULL REFERENCES entities(id))",
   "CREATE INDEX IF NOT EXISTS entities_kind ON entities(kind, created_at)",
+  "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL, updated_by TEXT NOT NULL)",
 ];
 
 type D1Statement = {
@@ -145,6 +146,29 @@ export function db(): Promise<Sql> {
   if (process.env.DATABASE_DRIVER === "d1") return open();
   pending ??= open();
   return pending;
+}
+
+/**
+ * Garde de lot : placée juste après un UPDATE conditionnel (verrou de
+ * révision), elle fait échouer tout le lot si cet UPDATE n’a modifié aucune
+ * ligne. SQLite n’autorise RAISE() que dans un déclencheur ; json() sur un
+ * texte invalide lève une erreur, évaluée seulement quand changes() vaut 0.
+ * D1 et l’adaptateur local annulent alors le lot entier.
+ */
+export const REQUIRE_CHANGE: [string, unknown[]] = [
+  "SELECT json('VERROU_REVISION') WHERE changes() = 0",
+  [],
+];
+
+/** Lot atomique ; un verrou de révision non satisfait devient « CONFLICT ». */
+export async function guardedBatch(statements: [string, unknown[]][]) {
+  try {
+    await (await db()).batch(statements);
+  } catch (e) {
+    if (/json|malformed/i.test(String((e as Error)?.message)))
+      throw new Error("CONFLICT");
+    throw e;
+  }
 }
 
 /** Limitation d’essais en une seule instruction atomique. */

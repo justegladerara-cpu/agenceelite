@@ -26,6 +26,9 @@ export const states: Record<string, [string, Tone]> = {
   refusee: ["Refusée", "bad"],
   expiree: ["Expirée", ""],
   repondu: ["Répondue", "ok"],
+  "a-payer": ["À encaisser", "wait"],
+  partiel: ["Partiellement réglée", "move"],
+  payee: ["Réglée", "ok"],
 };
 export const stateLabel = (v: unknown) =>
   (states[String(v)] || [String(v ?? "—")])[0];
@@ -75,6 +78,8 @@ export const actions: Record<string, string> = {
   "departure.updated": "Départ mis à jour",
   "shipment.transferred": "Expédition transférée d’agence",
   "account.registered": "Compte client créé",
+  "payment.created": "Encaissement enregistré",
+  "payments.settings": "Moyens de paiement modifiés",
   "account.verified": "Adresse email confirmée",
   "account.reset": "Mot de passe réinitialisé",
   "event.created": "Suivi mis à jour",

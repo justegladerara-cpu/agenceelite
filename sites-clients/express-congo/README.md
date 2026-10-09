@@ -37,6 +37,10 @@ Les devis sont persistés atomiquement avec leurs pièces en quarantaine et une 
 
 `/suivi` : la référence de l’expédition et son code de suivi (affiché et copiable dans la fiche de l’expédition) donnent les étapes, sans aucune donnée personnelle. Le code est dérivé de `TRACKING_SECRET` (obligatoire hors démonstration).
 
+## Tarifs et paiements
+
+`/tarifs` affiche la grille officielle (source unique `src/content/tariffs.ts`) et une estimation du fret aérien. Dans la gestion, **Finance → Hub de paiement** configure les moyens proposés aux clients (virement, MTN, Airtel, espèces) et montre l’état des connexions de paiement en ligne ; **Encaissements** liste les règlements saisis. Voir INTEGRATIONS.md pour relier Stripe ou une API Mobile Money.
+
 ## Logiciel de gestion (démonstration)
 
 `/demo` est conçu comme un logiciel de bureau : barre latérale par domaine (Ventes, Opérations, Support, Analyse), tableau de bord « À faire », demandes web du site, propositions, clients, expéditions, colis, départs, historique, assistance, rapports de chargement et journal d’activité (administrateur). Fiches détaillées avec chronologie, filtres, tri et export CSV des dossiers visibles. Toutes les permissions restent appliquées côté serveur.

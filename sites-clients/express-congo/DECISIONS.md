@@ -57,3 +57,15 @@ Le noyau opérationnel utilise des comptes fictifs préétablis, scrypt et des s
 | Transfert d’agence      | Interdit entre le départ et l’arrivée                                        | Un dossier en transit reste sous la responsabilité de l’agence de départ                                                                                                              |
 | Contenus officiels      | Repris du site expresscongo.fr, mention de source, statut `PROPOSÉ` conservé | Le client a désigné ce site comme source ; la validation formelle EC-026 reste nécessaire avant production                                                                            |
 | Design                  | Couche `premium.css` séparée                                                 | Montée en gamme réversible, sans réécrire `globals.css`                                                                                                                               |
+
+## Tarifs et paiements — 9 octobre 2026 (soir)
+
+| Contexte                               | Décision                                                      | Alternatives et justification                                                           |
+| -------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Grille transmise par le client         | Publiée telle quelle, une seule source (`tariffs.ts`)         | Évite les écarts entre page, estimation et propositions                                 |
+| Ligne maritime « 800 » sous « € / Kg » | Lue comme 800 € pour 1 m³, mention visible sous le tableau    | 800 € le kilo est incohérent avec 13 € le kilo en aérien ; validation demandée (EC-012) |
+| Estimation                             | Seulement fret aérien avec douane (prix unitaires)            | Les autres lignes sont « sur devis » dans la grille                                     |
+| Coordonnées bancaires                  | Saisies dans le hub par l’administrateur, affichées au client | Ce sont des informations destinées aux payeurs ; l’IBAN est contrôlé par sa clé         |
+| Clés des prestataires                  | Secrets Cloudflare uniquement, présence seule affichée        | Une clé secrète ne doit jamais transiter par un formulaire ni la base                   |
+| Encaissement                           | Saisie manuelle plafonnée, sur proposition acceptée           | Le paiement automatique viendra avec un webhook authentifié                             |
+| Écritures multiples sur D1             | Lot unique avec garde de révision (`REQUIRE_CHANGE`)          | D1 n’a pas de transaction interactive ; le lot est annulé en entier si un verrou échoue |
