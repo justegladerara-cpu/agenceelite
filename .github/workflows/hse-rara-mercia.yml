@@ -8,10 +8,9 @@ on:
     paths: ['HSE/RARA-MERCIA/**', '.github/workflows/hse-rara-mercia.yml']
   workflow_dispatch:
 
+# Publie dans la branche gh-pages (GitHub Pages l'active et la sert automatiquement).
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
@@ -42,17 +41,13 @@ jobs:
           mkdir -p ../../_site/hse-rara-mercia
           cp -r dist/. ../../_site/hse-rara-mercia/
           printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=hse-rara-mercia/"><a href="hse-rara-mercia/">HSE RARA Mercia</a>' > ../../_site/index.html
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-  publier:
-    needs: construire
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploiement.outputs.page_url }}hse-rara-mercia/
-    steps:
-      - id: deploiement
-        uses: actions/deploy-pages@v4
+      - name: Publier dans la branche gh-pages
+        working-directory: _site
+        run: |
+          touch .nojekyll
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "Mise en ligne HSE RARA Mercia (${GITHUB_SHA::7})"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
