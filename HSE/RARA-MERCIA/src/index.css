@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { min-height: 100%; }
+body { @apply bg-[#f4f6fb] text-slate-800 antialiased; font-feature-settings: 'cv11', 'ss01'; }
+input, select, textarea { @apply text-base; }
+
+@layer components {
+  .carte { @apply bg-white rounded-2xl shadow-carte border border-slate-100; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none; }
+  .btn-primaire { @apply btn bg-marine-700 text-white hover:bg-marine-800 shadow-sm; }
+  .btn-vert { @apply btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm; }
+  .btn-clair { @apply btn bg-white text-slate-700 border border-slate-200 hover:bg-slate-50; }
+  .btn-danger { @apply btn bg-rose-50 text-rose-700 hover:bg-rose-100; }
+  .champ { @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 outline-none transition focus:border-marine-500 focus:ring-4 focus:ring-marine-100; }
+  .etiquette { @apply block text-sm font-semibold text-slate-700 mb-1.5; }
+}
+
+@keyframes entree {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

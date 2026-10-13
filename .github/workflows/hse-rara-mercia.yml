@@ -1,0 +1,58 @@
+# Met en ligne la plateforme HSE RARA Mercia sur GitHub Pages :
+# https://justegladerara-cpu.github.io/agenceelite/hse-rara-mercia/
+name: HSE RARA Mercia - mise en ligne
+
+on:
+  push:
+    branches: [main]
+    paths: ['HSE/RARA-MERCIA/**', '.github/workflows/hse-rara-mercia.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  construire:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: HSE/RARA-MERCIA
+    env:
+      BASE_PATH: /agenceelite/hse-rara-mercia/
+      # Adresse et clé publique (publishable) Supabase : faites pour être visibles dans le navigateur.
+      VITE_SUPABASE_URL: https://xrlfedosaqtffraadmgk.supabase.co
+      VITE_SUPABASE_KEY: sb_publishable_fpHQmPBtF_4pFMaOnBIKXQ_7KcmvjeX
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: HSE/RARA-MERCIA/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Préparer le site
+        run: |
+          mkdir -p ../../_site/hse-rara-mercia
+          cp -r dist/. ../../_site/hse-rara-mercia/
+          printf '<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=hse-rara-mercia/"><a href="hse-rara-mercia/">HSE RARA Mercia</a>' > ../../_site/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  publier:
+    needs: construire
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}hse-rara-mercia/
+    steps:
+      - id: deploiement
+        uses: actions/deploy-pages@v4
