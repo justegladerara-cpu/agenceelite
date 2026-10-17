@@ -35,3 +35,22 @@ input, select, textarea { @apply text-base; }
 }
 /* Trait rouge sous les titres de section, repris de la barre du logo. */
 .trait::after { content: ''; display: block; width: 3rem; height: 4px; margin-top: .6rem; border-radius: 2px; background: #fb0000; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+
+/* Textes légaux rendus depuis le Markdown */
+.texte-legal { @apply text-slate-700 leading-relaxed text-[15px]; }
+.texte-legal h2 { @apply mt-8 first:mt-0 mb-3 text-xl font-extrabold text-encre-900 font-titre; }
+.texte-legal h3 { @apply mt-6 mb-2 text-base font-bold text-encre-800; }
+.texte-legal p { @apply my-3; }
+.texte-legal ul, .texte-legal ol { @apply my-3 pl-5 space-y-1; }
+.texte-legal ul { @apply list-disc; }
+.texte-legal ol { @apply list-decimal; }
+.texte-legal li::marker { @apply text-rouge-500; }
+.texte-legal a { @apply text-rouge-600 underline; }
+.texte-legal strong { @apply text-encre-900; }
+.texte-legal table { @apply my-4 w-full text-sm border-collapse block overflow-x-auto md:table; }
+.texte-legal th { @apply bg-slate-50 text-left font-semibold text-encre-800 px-3 py-2 border border-slate-200; }
+.texte-legal td { @apply px-3 py-2 border border-slate-200 align-top; }
+.texte-legal blockquote { @apply border-l-4 border-rouge-500 bg-slate-50 px-4 py-2 my-4 rounded-r-lg; }
+@media print { header, footer, .filigrane, aside { display: none !important; } .carte { box-shadow: none !important; border: 0 !important; } }

@@ -29,6 +29,8 @@ await db.exec(lire('001_emploi_schema.sql'))
 await db.exec(lire('002_emploi_tests.sql'))
 await db.exec(lire('001_emploi_schema.sql')) .catch((e) => { if (!/already exists/.test(e.message)) throw e })
 await db.exec(lire('002_emploi_tests.sql'))
+await db.exec(lire('004_emploi_points.sql'))
+await db.exec(lire('004_emploi_points.sql'))
 
 let ok = 0
 const verif = (cond, msg) => { if (!cond) { console.error('ÉCHEC :', msg); process.exit(1) } ok++; console.log('ok -', msg) }
@@ -99,9 +101,17 @@ verif(await echoue(CAND, `insert into public.emploi_resultats (test_id, candidat
 // Candidature et envoi du CV qualifié
 verif(await echoue(CAND, `insert into public.emploi_candidatures (offre_id, candidat_id, statut) values ('${offre.id}', '${CAND}', 'retenue')`), 'un candidat ne peut pas choisir le statut de sa candidature')
 const cand = (await comme(CAND, `insert into public.emploi_candidatures (offre_id, candidat_id, message) values ('${offre.id}', '${CAND}', 'Bonjour') returning id`)).rows[0]
-verif((await comme(ENT, 'select * from public.emploi_candidatures')).rows.length === 0, "l'entreprise ne voit pas les candidatures brutes")
+verif((await comme(ENT, 'select id from public.emploi_candidatures')).rows.length === 0, "l'entreprise ne voit pas les candidatures brutes")
 verif((await comme(ENT, 'select * from public.emploi_candidats')).rows.length === 0, "l'entreprise ne voit pas les candidats non transmis")
 verif(await echoue(CAND, 'select * from public.emploi_admin_candidatures()'), 'la liste admin est refusée aux candidats')
+verif(await echoue(CAND, 'select note_admin from public.emploi_candidatures'), "le candidat ne lit pas la note interne d'Agence Elite")
+const scC = (await comme(CAND, 'select * from public.emploi_scores()')).rows
+verif(scC.length === 1 && scC[0].candidature_id === cand.id, 'le candidat voit le score de sa candidature')
+verif((await comme(ENT, 'select * from public.emploi_scores()')).rows.length === 0, "l'entreprise ne voit pas les scores bruts")
+verif(await echoue(null, 'select * from public.emploi_scores()'), 'les scores sont refusés aux visiteurs')
+verif(await echoue(CAND, `select private.emploi_score('${cand.id}')`), 'le calcul interne du score est protégé')
+const scA = (await comme(ADMIN, 'select * from public.emploi_scores()')).rows[0]
+verif(scA.score === scA.detail.tests + scA.detail.profil + scA.detail.message && scA.detail.message === 0 && scA.niveau.length > 0, `score admin cohérent (${scA.score}, ${scA.niveau})`)
 const liste = (await comme(ADMIN, 'select * from public.emploi_admin_candidatures()')).rows
 verif(liste.length === 1 && liste[0].tests.length === 1 && liste[0].email === 'c@x.fr', "l'admin voit la candidature avec le résultat du test")
 await comme(ADMIN, `update public.emploi_candidatures set statut = 'qualifiee' where id = '${cand.id}'`)

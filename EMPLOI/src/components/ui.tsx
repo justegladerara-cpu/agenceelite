@@ -108,3 +108,53 @@ export function useMemoire<T>(cle: string, defaut: T): [T, (v: T) => void] {
   const set = (x: T) => { setV(x); try { localStorage.setItem(cle, JSON.stringify(x)) } catch { /* stockage indisponible */ } }
   return [v, set]
 }
+
+// ───────── Système de points (score sur 100 calculé par le serveur) ─────────
+export type Score = { candidature_id: string; score: number; niveau: string; detail: { tests: number; profil: number; message: number; tests_requis: number } }
+const COULEUR_NIVEAU: Record<string, string> = { Excellent: 'emerald', Bon: 'sky', 'À renforcer': 'amber', Insuffisant: 'rose' }
+const TRAIT_NIVEAU: Record<string, string> = { Excellent: '#059669', Bon: '#0284c7', 'À renforcer': '#d97706', Insuffisant: '#e11d48' }
+
+export function PastilleScore({ s }: { s?: Score }) {
+  if (!s) return null
+  return <Pastille couleur={COULEUR_NIVEAU[s.niveau] ?? 'slate'}>{s.score}/100 · {s.niveau}</Pastille>
+}
+
+export function JaugeScore({ s, taille = 92 }: { s: Score; taille?: number }) {
+  const r = 40, c = 2 * Math.PI * r
+  return (
+    <div className="relative shrink-0" style={{ width: taille, height: taille }}>
+      <svg viewBox="0 0 100 100" className="-rotate-90 w-full h-full">
+        <circle cx="50" cy="50" r={r} fill="none" stroke="#e2e8f0" strokeWidth="9" />
+        <motion.circle cx="50" cy="50" r={r} fill="none" stroke={TRAIT_NIVEAU[s.niveau] ?? '#fb0000'} strokeWidth="9" strokeLinecap="round"
+          strokeDasharray={c} initial={{ strokeDashoffset: c }} animate={{ strokeDashoffset: c * (1 - s.score / 100) }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} />
+      </svg>
+      <div className="absolute inset-0 grid place-items-center text-center leading-none">
+        <div><Compteur valeur={s.score} className="text-2xl font-extrabold text-encre-900" /><div className="text-[10px] text-slate-500 mt-0.5">/ 100</div></div>
+      </div>
+    </div>
+  )
+}
+
+export function DetailScore({ s }: { s: Score }) {
+  const lignes = [
+    { label: s.detail.tests_requis > 0 ? `Tests demandés (${s.detail.tests_requis})` : 'Tests passés', v: s.detail.tests, max: 70 },
+    { label: 'Profil complet (CV, téléphone, ville)', v: s.detail.profil, max: 20 },
+    { label: 'Message de motivation', v: s.detail.message, max: 10 },
+  ]
+  return (
+    <div className="flex flex-col sm:flex-row items-center gap-5">
+      <JaugeScore s={s} />
+      <div className="w-full space-y-2.5">
+        <div className="flex items-center gap-2"><span className="font-bold text-encre-800">Score</span><PastilleScore s={s} /></div>
+        {lignes.map((l) => (
+          <div key={l.label}>
+            <div className="flex justify-between text-xs text-slate-600"><span>{l.label}</span><b>{l.v} / {l.max}</b></div>
+            <div className="mt-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+              <motion.div className="h-full rounded-full bg-rouge-500" initial={{ width: 0 }} animate={{ width: `${(l.v / l.max) * 100}%` }} transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

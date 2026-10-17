@@ -117,7 +117,7 @@ export function Inscription() {
         <div><label className="etiquette" htmlFor="mdp">Mot de passe (8 caractères minimum)</label><input id="mdp" type="password" required minLength={8} autoComplete="new-password" className="champ" {...champ('mdp')} /></div>
         <label className="flex items-start gap-2 text-sm text-slate-600">
           <input type="checkbox" className="mt-1" checked={accord} onChange={(e) => setAccord(e.target.checked)} />
-          <span>J’accepte qu’Agence Elite conserve mes informations{type === 'candidat' ? ' et mon CV pour me proposer des emplois et les transmettre aux recruteurs' : ''}, comme expliqué dans la <Link to="/confidentialite" className="underline" target="_blank">politique de données</Link>.</span>
+          <span>J’accepte qu’Agence Elite conserve mes informations{type === 'candidat' ? ' et mon CV pour me proposer des emplois et les transmettre aux recruteurs' : ''}, et j’accepte les <Link to={type === 'candidat' ? '/cgu' : '/conditions-recruteurs'} className="underline" target="_blank">conditions {type === 'candidat' ? 'd’utilisation' : 'des recruteurs'}</Link> et la <Link to="/confidentialite" className="underline" target="_blank">politique de protection des données</Link>.</span>
         </label>
         <button className="btn-primaire w-full" disabled={envoi}>{envoi ? 'Création…' : 'Créer mon compte'}</button>
       </form>

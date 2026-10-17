@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
-import { Search, X } from 'lucide-react'
+import { SlidersHorizontal, Search, X } from 'lucide-react'
 import { OffreCarte, useOffres } from '../components/Offres'
 import { Chargement } from '../components/ui'
 import { CONTRATS, METIERS, PAYS, VILLES, type Pays } from '../lib/donnees'
@@ -32,17 +33,25 @@ export default function Offres() {
 
   const villes = f.pays ? VILLES[f.pays as Pays] : [...VILLES.CG, ...VILLES.FR]
   const filtres = Object.values(f).some(Boolean)
+  const [plus, setPlus] = useState(false)
+  const nbFiltres = [f.pays, f.ville, f.contrat, f.metier].filter(Boolean).length
 
   return (
     <div className="conteneur py-10">
       <h1 className="text-3xl font-extrabold text-encre-800">Offres d’emploi</h1>
       <p className="text-slate-500 mt-1">{offres ? `${liste.length} offre${liste.length > 1 ? 's' : ''}` : 'Chargement…'}</p>
 
-      <div className="carte mt-6 p-3 grid gap-2 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr]">
-        <label className="flex items-center gap-2 rounded-xl bg-slate-50 px-3">
-          <Search size={17} className="text-slate-400" />
-          <input value={f.q} onChange={(e) => changer('q', e.target.value)} placeholder="Mot-clé" className="w-full bg-transparent py-2.5 outline-none" />
-        </label>
+      <div className="carte mt-6 p-3 grid gap-2 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr] sticky top-[68px] z-20 md:static">
+        <div className="flex gap-2">
+          <label className="flex flex-1 items-center gap-2 rounded-xl bg-slate-50 px-3">
+            <Search size={17} className="text-slate-400" />
+            <input value={f.q} onChange={(e) => changer('q', e.target.value)} placeholder="Mot-clé" className="w-full bg-transparent py-2.5 outline-none" aria-label="Rechercher une offre" />
+          </label>
+          <button type="button" onClick={() => setPlus(!plus)} className={`md:hidden relative btn-clair px-3 ${plus ? 'ring-2 ring-rouge-500' : ''}`} aria-expanded={plus} aria-label="Filtres">
+            <SlidersHorizontal size={17} />{nbFiltres > 0 && <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-rouge-500 text-[10px] font-bold text-white">{nbFiltres}</span>}
+          </button>
+        </div>
+        <div className={`${plus ? 'grid' : 'hidden'} md:contents grid-cols-2 gap-2`}>
         <select className="champ" value={f.pays} onChange={(e) => changer('pays', e.target.value)}>
           <option value="">Tous les pays</option>
           {(Object.keys(PAYS) as Pays[]).map((p) => <option key={p} value={p}>{PAYS[p].drapeau} {PAYS[p].nom}</option>)}
@@ -59,6 +68,7 @@ export default function Offres() {
           <option value="">Tous les métiers</option>
           {METIERS.map((m) => <option key={m}>{m}</option>)}
         </select>
+        </div>
       </div>
       {filtres && <button onClick={() => setParams({}, { replace: true })} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-rouge-600"><X size={15} />Effacer les filtres</button>}
 
@@ -67,7 +77,15 @@ export default function Offres() {
         {!offres ? <Chargement /> : liste.length === 0 ? (
           <div className="carte p-10 text-center text-slate-500">Aucune offre ne correspond. Essayez avec moins de filtres.</div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">{liste.map((o) => <OffreCarte key={o.id} o={o} />)}</div>
+          <motion.div layout className="grid gap-4 md:grid-cols-2">
+            <AnimatePresence mode="popLayout">
+              {liste.map((o, i) => (
+                <motion.div key={o.id} layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: Math.min(i, 8) * 0.04 } }} exit={{ opacity: 0, scale: 0.96 }}>
+                  <OffreCarte o={o} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
     </div>

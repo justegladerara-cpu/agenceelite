@@ -1,5 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { MotionConfig } from 'framer-motion'
 import { FournisseurApp, useApp } from './lib/contexte'
 import { supabase } from './lib/supabase'
 import type { Role } from './lib/donnees'
@@ -10,7 +11,10 @@ import Offres from './pages/Offres'
 import Offre from './pages/Offre'
 import { Connexion, Inscription, NouveauMotDePasse } from './pages/Connexion'
 import { PasserTest, Tests } from './pages/Tests'
-import { Confidentialite, Introuvable, Recruter } from './pages/Pages'
+import { Introuvable, Recruter } from './pages/Pages'
+
+const Legal = lazy(() => import('./pages/Legal'))
+const LEGAUX = ['/cgu', '/confidentialite', '/conditions-recruteurs', '/reglement-tests', '/non-discrimination']
 
 // Espaces connectés chargés à la demande : la page publique reste légère sur mobile.
 const EspaceCandidat = lazy(() => import('./pages/candidat/EspaceCandidat'))
@@ -36,6 +40,7 @@ function Reserve({ role, children }: { role: Role; children: ReactNode }) {
 
 export default function App() {
   return (
+    <MotionConfig reducedMotion="user">
     <FournisseurApp>
       <Layout>
         <Routes>
@@ -48,7 +53,7 @@ export default function App() {
           <Route path="/connexion" element={<Connexion />} />
           <Route path="/inscription" element={<Inscription />} />
           <Route path="/mot-de-passe" element={<NouveauMotDePasse />} />
-          <Route path="/confidentialite" element={<Confidentialite />} />
+          {LEGAUX.map((c) => <Route key={c} path={c} element={<Suspense fallback={<Chargement />}><Legal /></Suspense>} />)}
           <Route path="/espace" element={<Reserve role="candidat"><EspaceCandidat /></Reserve>} />
           <Route path="/espace-entreprise" element={<Reserve role="entreprise"><EspaceEntreprise /></Reserve>} />
           <Route path="/admin" element={<Reserve role="admin"><Admin /></Reserve>} />
@@ -56,5 +61,6 @@ export default function App() {
         </Routes>
       </Layout>
     </FournisseurApp>
+    </MotionConfig>
   )
 }

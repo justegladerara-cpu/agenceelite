@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ClipboardCheck, FileText, Send, Trash2, Upload, UserRound } from 'lucide-react'
-import { Chargement, EnTete, Pastille, Vide } from '../../components/ui'
+import { ChevronDown, ClipboardCheck, FileText, Send, Trash2, Upload, UserRound } from 'lucide-react'
+import { Chargement, DetailScore, EnTete, Pastille, PastilleScore, Vide, type Score } from '../../components/ui'
 import { useApp } from '../../lib/contexte'
 import { BUCKET_CV, messageErreur, supabase } from '../../lib/supabase'
 import { METIERS, NIVEAUX, STATUTS_CANDIDATURE, VILLES, dateCourte, type Pays } from '../../lib/donnees'
@@ -141,8 +141,13 @@ function MonProfil() {
 function MesCandidatures() {
   const { toast } = useApp()
   const [liste, setListe] = useState<MaCandidature[] | null>(null)
-  const charger = () => supabase.from('emploi_candidatures').select('id, cree_le, statut, offre:emploi_offres(id, titre, ville)').order('cree_le', { ascending: false })
-    .then(({ data }) => setListe((data as unknown as MaCandidature[]) ?? []))
+  const [scores, setScores] = useState<Record<string, Score>>({})
+  const [ouvert, setOuvert] = useState<string | null>(null)
+  const charger = () => {
+    supabase.from('emploi_candidatures').select('id, cree_le, statut, offre:emploi_offres(id, titre, ville)').order('cree_le', { ascending: false })
+      .then(({ data }) => setListe((data as unknown as MaCandidature[]) ?? []))
+    supabase.rpc('emploi_scores').then(({ data }) => setScores(Object.fromEntries(((data as Score[]) ?? []).map((x) => [x.candidature_id, x]))))
+  }
   useEffect(() => { charger() }, [])
   const retirer = async (id: string) => {
     if (!confirm('Retirer cette candidature ?')) return
@@ -157,15 +162,19 @@ function MesCandidatures() {
       {liste.map((c) => {
         const s = STATUTS_CANDIDATURE[c.statut] ?? STATUTS_CANDIDATURE.nouvelle
         return (
-          <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <div key={c.id} className="p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               {c.offre ? <Link to={`/offres/${c.offre.id}`} className="font-semibold text-encre-800 hover:underline">{c.offre.titre}</Link> : <span className="font-semibold text-slate-400">Offre retirée</span>}
               <p className="text-sm text-slate-500">{c.offre?.ville} · envoyée le {dateCourte(c.cree_le)}</p>
             </div>
             <div className="flex items-center gap-2">
               <Pastille couleur={s.couleur}>{s.pourCandidat}</Pastille>
+              {scores[c.id] && <button onClick={() => setOuvert(ouvert === c.id ? null : c.id)} className="inline-flex items-center gap-1" aria-label="Voir mon score"><PastilleScore s={scores[c.id]} /><ChevronDown size={15} className={`text-slate-400 transition-transform ${ouvert === c.id ? 'rotate-180' : ''}`} /></button>}
               {c.statut === 'nouvelle' && <button onClick={() => retirer(c.id)} className="p-2 text-slate-400 hover:text-rose-600" aria-label="Retirer"><Trash2 size={16} /></button>}
             </div>
+          </div>
+          {ouvert === c.id && scores[c.id] && <ConseilsScore s={scores[c.id]} />}
           </div>
         )
       })}
@@ -189,6 +198,20 @@ function MesTests() {
           <Pastille couleur={r.reussi ? 'emerald' : 'amber'}>{r.pourcentage} % · {r.reussi ? 'Réussi' : 'Non réussi'}</Pastille>
         </div>
       ))}
+    </div>
+  )
+}
+
+function ConseilsScore({ s }: { s: Score }) {
+  const conseils: string[] = []
+  if (s.detail.tests < 70) conseils.push(s.detail.tests_requis > 0 ? 'Passez tous les tests demandés par l’offre : un test non passé compte 0.' : 'Passez des tests de compétences pour montrer votre niveau.')
+  if (s.detail.profil < 20) conseils.push('Complétez votre profil : CV, téléphone, ville et pays.')
+  if (s.detail.message < 10) conseils.push('Un message de motivation d’au moins 50 caractères rapporte 10 points.')
+  return (
+    <div className="mt-4 rounded-xl bg-slate-50 p-4 animate-[fadeIn_.3s_ease]">
+      <DetailScore s={s} />
+      {conseils.length > 0 && <ul className="mt-4 space-y-1 text-sm text-slate-600">{conseils.map((x) => <li key={x}>• {x}</li>)}</ul>}
+      <p className="mt-3 text-xs text-slate-500">Le score aide Agence Elite à trier les candidatures. La décision finale se fait toujours après un échange avec vous. <Link to="/reglement-tests" className="underline">Comment le score est calculé</Link></p>
     </div>
   )
 }

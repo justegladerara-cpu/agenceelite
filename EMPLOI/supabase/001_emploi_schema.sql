@@ -596,3 +596,8 @@ create policy "emploi cv modification" on storage.objects for update to authenti
   using (bucket_id = 'emploi-cv' and (storage.foldername(name))[1] = (select auth.uid())::text);
 create policy "emploi cv suppression" on storage.objects for delete to authenticated
   using (bucket_id = 'emploi-cv' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- La note interne d'Agence Elite sur une candidature n'est jamais lisible par le candidat :
+-- lecture colonne par colonne, sans note_admin (l'administration la lit par emploi_admin_candidatures).
+revoke select on public.emploi_candidatures from anon, authenticated;
+grant select (id, offre_id, candidat_id, message, statut, cree_le, maj_le) on public.emploi_candidatures to authenticated;

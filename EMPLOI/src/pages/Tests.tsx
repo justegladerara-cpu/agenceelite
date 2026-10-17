@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Award, CheckCircle2, ClipboardCheck, Clock, Lock, XCircle } from 'lucide-react'
 import { Chargement, Pastille } from '../components/ui'
+import { Cascade, CascadeElement } from '../components/anim'
 import { useApp } from '../lib/contexte'
 import { messageErreur, supabase } from '../lib/supabase'
 import type { Test } from '../lib/donnees'
@@ -47,22 +48,22 @@ export function Tests() {
       {!tests ? <Chargement /> : parCategorie.map(([cat, liste]) => (
         <section key={cat} className="mt-10">
           <h2 className="text-xl font-bold text-encre-800 mb-4">{cat}</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Cascade className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {liste.map((t) => {
               const r = resultats.find((x) => x.test_id === t.id)
               return (
-                <Link key={t.id} to={`/tests/${t.slug}`} className="carte p-5 hover:border-rouge-400 transition flex flex-col">
+                <CascadeElement key={t.id}><Link to={`/tests/${t.slug}`} className="carte group h-full p-5 transition duration-300 hover:-translate-y-1 hover:border-rouge-300 hover:shadow-[0_18px_40px_-20px_rgba(11,11,12,.35)] flex flex-col">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-encre-900 text-white"><ClipboardCheck size={20} /></span>
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-encre-900 text-white transition-colors duration-300 group-hover:bg-rouge-600"><ClipboardCheck size={20} /></span>
                     {r && <Pastille couleur={r.reussi ? 'emerald' : 'amber'}>{r.pourcentage} %</Pastille>}
                   </div>
                   <h3 className="mt-3 font-bold text-encre-800">{t.titre}</h3>
                   <p className="mt-1 text-sm text-slate-500 flex-1">{t.description}</p>
                   <p className="mt-3 text-xs text-slate-400 inline-flex items-center gap-1"><Clock size={13} />{t.duree_minutes} min · réussite à {t.seuil_reussite} %</p>
-                </Link>
+                </Link></CascadeElement>
               )
             })}
-          </div>
+          </Cascade>
         </section>
       ))}
     </div>

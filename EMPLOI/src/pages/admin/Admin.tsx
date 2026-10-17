@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Briefcase, Building2, CheckCircle2, ClipboardCheck, Download, Plus, Search, Send, ShieldCheck, Users, Wallet, XCircle } from 'lucide-react'
-import { Chargement, Compteur, EnTete, Fenetre, Pastille, Vide } from '../../components/ui'
+import { Chargement, Compteur, DetailScore, EnTete, Fenetre, Pastille, PastilleScore, Vide, type Score } from '../../components/ui'
 import { FormulaireOffre, type OffreEdition } from '../../components/FormulaireOffre'
 import { useApp } from '../../lib/contexte'
 import { BUCKET_CV, messageErreur, supabase } from '../../lib/supabase'
@@ -51,7 +51,7 @@ function TableauDeBord({ aller }: { aller: (o: Onglet) => void }) {
   const [revenus, setRevenus] = useState<{ devise: string; paye: number; attente: number }[]>([])
   useEffect(() => {
     const compter = async (table: string, filtre?: [string, string]) => {
-      let q = supabase.from(table).select('*', { count: 'exact', head: true })
+      let q = supabase.from(table).select(table === 'emploi_candidats' ? 'user_id' : 'id', { count: 'exact', head: true })
       if (filtre) q = q.eq(filtre[0], filtre[1])
       return (await q).count ?? 0
     }
@@ -116,13 +116,17 @@ function Candidatures() {
   const [texte, setTexte] = useState('')
   const [choix, setChoix] = useState<CandidatureA | null>(null)
   const [envoi, setEnvoi] = useState<CandidatureA | null>(null)
+  const [scores, setScores] = useState<Record<string, Score>>({})
+  const [tri, setTri] = useState<'date' | 'score'>('date')
   const charger = useCallback(() => {
     supabase.rpc('emploi_admin_candidatures').then(({ data, error }) => { if (error) toast(messageErreur(error), 'erreur'); setListe((data as CandidatureA[]) ?? []) })
+    supabase.rpc('emploi_scores').then(({ data }) => setScores(Object.fromEntries(((data as Score[]) ?? []).map((x) => [x.candidature_id, x]))))
   }, [toast])
   useEffect(() => { charger() }, [charger])
 
   const filtrees = useMemo(() => (liste ?? []).filter((c) => (!statut || c.statut === statut)
-    && (!texte || `${c.nom} ${c.email} ${c.offre_titre} ${c.titre ?? ''} ${c.competences.join(' ')}`.toLowerCase().includes(texte.toLowerCase()))), [liste, statut, texte])
+    && (!texte || `${c.nom} ${c.email} ${c.offre_titre} ${c.titre ?? ''} ${c.competences.join(' ')}`.toLowerCase().includes(texte.toLowerCase())))
+    .sort((a, b) => tri === 'score' ? (scores[b.id]?.score ?? -1) - (scores[a.id]?.score ?? -1) : 0), [liste, statut, texte, tri, scores])
 
   const changer = async (c: CandidatureA, valeurs: { statut?: string; note_admin?: string | null }) => {
     const { error } = await supabase.from('emploi_candidatures').update(valeurs).eq('id', c.id)
@@ -133,11 +137,15 @@ function Candidatures() {
   if (!liste) return <Chargement />
   return (
     <>
-      <div className="carte p-3 mb-4 grid gap-2 md:grid-cols-[1fr_220px]">
+      <div className="carte p-3 mb-4 grid gap-2 md:grid-cols-[1fr_220px_200px]">
         <label className="flex items-center gap-2 rounded-xl bg-slate-50 px-3"><Search size={17} className="text-slate-400" /><input className="w-full bg-transparent py-2.5 outline-none" placeholder="Nom, e-mail, offre, compétence…" value={texte} onChange={(e) => setTexte(e.target.value)} /></label>
         <select className="champ" value={statut} onChange={(e) => setStatut(e.target.value)}>
           <option value="">Tous les statuts ({liste.length})</option>
           {Object.entries(STATUTS_CANDIDATURE).map(([k, v]) => <option key={k} value={k}>{v.label} ({liste.filter((c) => c.statut === k).length})</option>)}
+        </select>
+        <select className="champ" value={tri} onChange={(e) => setTri(e.target.value as 'date' | 'score')}>
+          <option value="date">Plus récentes d’abord</option>
+          <option value="score">Meilleur score d’abord</option>
         </select>
       </div>
       {filtrees.length === 0 ? <Vide texte="Aucune candidature." /> : (
@@ -148,6 +156,7 @@ function Candidatures() {
                 <div className="font-semibold text-encre-800">{c.nom} <span className="font-normal text-slate-500">· {c.titre ?? 'sans titre'}</span></div>
                 <div className="text-sm text-slate-500">{c.offre_titre}{c.entreprise_nom ? ` (${c.entreprise_nom})` : ''} · {depuis(c.cree_le)}</div>
                 <div className="mt-1 flex flex-wrap gap-1.5">
+                  <PastilleScore s={scores[c.id]} />
                   {c.tests.map((t, i) => <Pastille key={i} couleur={t.reussi ? 'emerald' : 'amber'}>{t.titre} {t.pourcentage} %</Pastille>)}
                   {!c.cv_chemin && <Pastille couleur="rose">Pas de CV</Pastille>}
                 </div>
@@ -166,6 +175,7 @@ function Candidatures() {
       <Fenetre ouverte={!!choix} onFermer={() => setChoix(null)} titre={choix?.nom ?? ''}>
         {choix && (
           <div className="space-y-3 text-sm">
+            {scores[choix.id] && <div className="rounded-xl border border-slate-200 p-4"><DetailScore s={scores[choix.id]} /></div>}
             <p><b>Poste visé :</b> {choix.offre_titre}</p>
             <p><b>E-mail :</b> <a className="underline" href={`mailto:${choix.email}`}>{choix.email}</a>{choix.telephone && <> · <b>Tél. :</b> <a className="underline" href={`tel:${choix.telephone}`}>{choix.telephone}</a></>}</p>
             <p><b>Lieu :</b> {choix.ville ?? '?'}{choix.pays ? `, ${PAYS[choix.pays as Pays]?.nom}` : ''} · <b>Expérience :</b> {choix.experience_annees ?? '?'} an(s)</p>

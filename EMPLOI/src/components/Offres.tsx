@@ -20,10 +20,11 @@ export function useOffres() {
 
 export function OffreCarte({ o }: { o: OffrePublique }) {
   return (
-    <Link to={`/offres/${o.id}`} className="carte block p-5 hover:border-rouge-400 hover:-translate-y-0.5 transition">
+    <Link to={`/offres/${o.id}`} className="carte group relative block overflow-hidden p-5 transition duration-300 hover:-translate-y-1 hover:border-rouge-300 hover:shadow-[0_18px_40px_-20px_rgba(11,11,12,.35)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-bold text-lg text-encre-800 leading-snug">{o.titre}</h3>
+          <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 origin-top scale-y-0 bg-rouge-500 transition-transform duration-300 group-hover:scale-y-100" />
+          <h3 className="font-bold text-lg text-encre-800 leading-snug transition-colors group-hover:text-rouge-600">{o.titre}</h3>
           <p className="text-sm text-slate-500 mt-0.5 truncate">{o.entreprise_nom ?? 'Entreprise confidentielle'}</p>
         </div>
         {o.a_la_une && <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-rouge-100 px-2.5 py-1 text-xs font-bold text-rouge-600"><Star size={12} fill="currentColor" />À la une</span>}

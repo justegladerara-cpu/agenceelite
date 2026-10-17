@@ -1,3 +1,4 @@
+import { Cascade, CascadeElement } from '../components/anim'
 import { Link } from 'react-router-dom'
 import { BadgeCheck, ClipboardCheck, FileSearch, Handshake, Send } from 'lucide-react'
 import { useApp } from '../lib/contexte'
@@ -25,15 +26,15 @@ export function Recruter() {
       </section>
       <section className="conteneur py-14">
         <h2 className="text-2xl font-extrabold text-encre-800">Comment ça marche</h2>
-        <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Cascade className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4" pas={0.1}>
           {etapes.map(({ i: I, t, d }, n) => (
-            <div key={t} className="carte p-5">
+            <CascadeElement key={t} className="carte p-5 transition duration-300 hover:-translate-y-1">
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-rouge-50 text-rouge-600"><I size={20} /></span>
               <h3 className="mt-3 font-bold text-encre-800">{n + 1}. {t}</h3>
               <p className="mt-1 text-sm text-slate-600">{d}</p>
-            </div>
+            </CascadeElement>
           ))}
-        </div>
+        </Cascade>
         <div className="mt-10 carte p-6 md:p-8 grid gap-6 md:grid-cols-2 items-center">
           <div>
             <h2 className="text-2xl font-extrabold text-encre-800">Un tarif simple</h2>
@@ -47,23 +48,6 @@ export function Recruter() {
         </div>
       </section>
     </>
-  )
-}
-
-export function Confidentialite() {
-  return (
-    <div className="conteneur py-12 max-w-3xl">
-      <h1 className="text-3xl font-extrabold text-encre-800">Vos données personnelles</h1>
-      <div className="carte mt-6 p-6 md:p-8 space-y-4 text-slate-700 leading-relaxed">
-        <p><b>Qui garde vos données ?</b> Agence Elite, Pointe-Noire (Congo). Contact : contact@agence-elite.fr.</p>
-        <p><b>Ce que nous gardons :</b> votre nom, vos coordonnées, votre profil, votre CV, vos candidatures et vos résultats de tests. Pour les entreprises : les informations de l’entreprise et de la personne de contact.</p>
-        <p><b>Pourquoi :</b> vous proposer des emplois, étudier vos candidatures et présenter votre profil aux entreprises qui recrutent. Vous avez donné votre accord en créant votre compte.</p>
-        <p><b>Qui les voit :</b> l’équipe d’Agence Elite. Une entreprise voit votre profil, votre CV et vos résultats seulement si Agence Elite le lui transmet pour un poste. Vos données ne sont jamais vendues à des fichiers publicitaires.</p>
-        <p><b>Combien de temps :</b> tant que votre compte est actif, puis 2 ans après votre dernière connexion. Les résultats de tests suivent la même règle.</p>
-        <p><b>Vos droits :</b> vous pouvez voir, corriger ou supprimer vos informations à tout moment depuis votre espace, ou en écrivant à contact@agence-elite.fr. Vous pouvez aussi retirer votre accord : votre compte sera alors supprimé. En France, vous pouvez saisir la CNIL ; au Congo, l’autorité compétente en matière de protection des données.</p>
-        <p><b>Sécurité :</b> les CV sont rangés dans un espace privé. Seules les personnes autorisées peuvent les ouvrir, avec un lien valable deux minutes.</p>
-      </div>
-    </div>
   )
 }
 
