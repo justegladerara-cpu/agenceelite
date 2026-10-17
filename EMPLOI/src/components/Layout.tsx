@@ -14,7 +14,7 @@ const LIENS = [
 export function Logo({ clair }: { clair?: boolean }) {
   return (
     <Link to="/" className="flex items-center gap-2.5">
-      <img src="/icone.svg" alt="" className="h-9 w-9" />
+      <img src={`${import.meta.env.BASE_URL}icone.svg`} alt="" className="h-9 w-9" />
       <span className="leading-none">
         <span className={`block font-titre text-lg font-extrabold ${clair ? 'text-white' : 'text-marine-800'}`}>Elite Emploi</span>
         <span className={`block text-[11px] font-medium ${clair ? 'text-marine-100/70' : 'text-slate-500'}`}>par Agence Elite</span>

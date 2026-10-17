@@ -27,7 +27,7 @@ export function Connexion() {
     e.preventDefault()
     setEnvoi(true)
     if (oubli) {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/mot-de-passe` })
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}mot-de-passe` })
       setEnvoi(false)
       if (error) return toast(messageErreur(error), 'erreur')
       toast('Si ce compte existe, un e-mail vient de partir pour choisir un nouveau mot de passe.')
@@ -49,7 +49,7 @@ export function Connexion() {
         <button className="btn-primaire w-full" disabled={envoi}>{envoi ? 'Patientez…' : oubli ? 'Recevoir le lien' : 'Se connecter'}</button>
         <button type="button" onClick={() => setOubli(!oubli)} className="w-full text-sm font-semibold text-slate-500 hover:text-marine-800">{oubli ? 'Retour à la connexion' : 'Mot de passe oublié ?'}</button>
       </form>
-      <p className="mt-6 text-center text-sm text-slate-600">Pas encore de compte ? <Link to="/inscription" className="font-semibold text-bordeaux-600">Créer un compte</Link></p>
+      <p className="mt-6 text-center text-sm text-slate-600">Pas encore de compte ? <Link to={`/inscription${params.get('retour') ? `?retour=${encodeURIComponent(params.get('retour')!)}` : ''}`} className="font-semibold text-bordeaux-600">Créer un compte</Link></p>
     </div>
   )
 }
@@ -64,7 +64,7 @@ export function Inscription() {
   const [envoi, setEnvoi] = useState(false)
   const [aConfirmer, setAConfirmer] = useState(false)
 
-  useEffect(() => { if (session && profil) nav(retourApres(profil.role, null), { replace: true }) }, [session, profil, nav])
+  useEffect(() => { if (session && profil) nav(retourApres(profil.role, params.get('retour')), { replace: true }) }, [session, profil, nav, params])
 
   const valider = async (e: FormEvent) => {
     e.preventDefault()
@@ -73,7 +73,7 @@ export function Inscription() {
     const { data, error } = await supabase.auth.signUp({
       email: f.email.trim(), password: f.mdp,
       options: {
-        emailRedirectTo: `${window.location.origin}/connexion`,
+        emailRedirectTo: `${window.location.origin}${import.meta.env.BASE_URL}connexion`,
         data: { app: 'emploi', role: type, consentement: true, nom: f.nom.trim(), telephone: f.telephone.trim(), pays: f.pays },
       },
     })

@@ -46,7 +46,12 @@ export default function Offre() {
   }
 
   const bouton = () => {
-    if (!session) return <Link to={`/connexion?retour=/offres/${o.id}`} className="btn-primaire w-full">Se connecter pour postuler</Link>
+    if (!session) return (
+      <div className="space-y-2">
+        <Link to={`/inscription?retour=/offres/${o.id}`} className="btn-primaire w-full">Postuler : créer mon compte</Link>
+        <Link to={`/connexion?retour=/offres/${o.id}`} className="btn-clair w-full">J’ai déjà un compte</Link>
+      </div>
+    )
     if (profil && profil.role !== 'candidat') return <p className="text-sm text-slate-500">Connectez-vous avec un compte candidat pour postuler.</p>
     if (dejaPostule) return <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-emerald-700 font-semibold"><CheckCircle2 size={18} />Vous avez postulé</div>
     return <button onClick={() => setOuvert(true)} className="btn-primaire w-full">Postuler</button>
