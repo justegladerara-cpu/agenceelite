@@ -194,8 +194,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists emploi_garde_profil on public.emploi_profils;
-create trigger emploi_garde_profil before update on public.emploi_profils
+create or replace trigger emploi_garde_profil before update on public.emploi_profils
   for each row execute function private.emploi_garde_profil();
 
 create or replace function private.emploi_garde_entreprise() returns trigger
@@ -210,8 +209,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists emploi_garde_entreprise on public.emploi_entreprises;
-create trigger emploi_garde_entreprise before insert or update on public.emploi_entreprises
+create or replace trigger emploi_garde_entreprise before insert or update on public.emploi_entreprises
   for each row execute function private.emploi_garde_entreprise();
 
 create or replace function private.emploi_garde_offre() returns trigger
@@ -243,8 +241,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists emploi_garde_offre on public.emploi_offres;
-create trigger emploi_garde_offre before insert or update on public.emploi_offres
+create or replace trigger emploi_garde_offre before insert or update on public.emploi_offres
   for each row execute function private.emploi_garde_offre();
 
 create or replace function private.emploi_maj_candidature() returns trigger
@@ -253,8 +250,7 @@ begin
   new.maj_le := now();
   return new;
 end $$;
-drop trigger if exists emploi_maj_candidature on public.emploi_candidatures;
-create trigger emploi_maj_candidature before update on public.emploi_candidatures
+create or replace trigger emploi_maj_candidature before update on public.emploi_candidatures
   for each row execute function private.emploi_maj_candidature();
 
 -- Création automatique du profil à l'inscription.
@@ -267,7 +263,7 @@ begin
   if coalesce(new.raw_user_meta_data ->> 'app', '') <> 'emploi' then
     return new;
   end if;
-  if v_role not in ('candidat', 'entreprise') then
+  if coalesce(v_role, '') not in ('candidat', 'entreprise') then
     v_role := 'candidat';
   end if;
   insert into public.emploi_profils (id, role, nom, telephone, pays)
@@ -286,8 +282,7 @@ begin
   end if;
   return new;
 end $$;
-drop trigger if exists emploi_nouveau_compte on auth.users;
-create trigger emploi_nouveau_compte after insert on auth.users
+create or replace trigger emploi_nouveau_compte after insert on auth.users
   for each row execute function private.emploi_nouveau_compte();
 
 -- ───────────────────────── Sécurité (RLS) ─────────────────────────

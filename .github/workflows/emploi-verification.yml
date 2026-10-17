@@ -26,7 +26,7 @@ jobs:
           cache-dependency-path: EMPLOI/package-lock.json
       - run: npm ci
       - name: Les tests SQL sont à jour
-        run: python3 scripts/generer-tests-sql.py && git diff --exit-code supabase/002_emploi_tests.sql
+        run: python3 scripts/generer-tests-sql.py && git diff --exit-code supabase/002_emploi_tests.sql supabase/tests-melanges.json
       - name: Base de données (sécurité et parcours)
         run: npm run verifier-sql
       - name: Construction du site
