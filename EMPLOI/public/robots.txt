@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /espace
+Disallow: /admin
