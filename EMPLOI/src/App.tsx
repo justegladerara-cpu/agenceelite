@@ -24,7 +24,7 @@ function Reserve({ role, children }: { role: Role; children: ReactNode }) {
   if (chargement || (session && !profil && !profilVerifie)) return <Chargement texte="Ouverture de votre espace…" />
   if (session && !profil) return (
     <div className="conteneur py-20 max-w-md text-center">
-      <h1 className="text-2xl font-extrabold text-marine-800">Compte non reconnu</h1>
+      <h1 className="text-2xl font-extrabold text-encre-800">Compte non reconnu</h1>
       <p className="mt-2 text-slate-600">Ce compte n’a pas été créé sur Elite Emploi. Déconnectez-vous, puis créez un compte candidat ou entreprise.</p>
       <button className="btn-primaire mt-6" onClick={() => supabase.auth.signOut()}>Se déconnecter</button>
     </div>

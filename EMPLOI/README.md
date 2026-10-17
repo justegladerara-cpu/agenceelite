@@ -59,4 +59,4 @@ npm run build
 npm run verifier-sql         # contrôle des migrations et de la sécurité
 ```
 
-Technologies : React, TypeScript, Vite, Tailwind, Framer Motion, Supabase. Charte reprise du site SAS Congo (marine, doré, bordeaux).
+Technologies : React, TypeScript, Vite, Tailwind, Framer Motion, Supabase. Charte Agence Elite : noir, rouge et blanc, logo en filigrane (fichiers dans `public/`).

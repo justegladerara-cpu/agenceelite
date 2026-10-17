@@ -103,7 +103,7 @@ function MesOffres({ entreprise }: { entreprise: Entreprise }) {
         <div className="carte divide-y divide-slate-100">
           {offres.map((o) => (
             <div key={o.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-              <div><div className="font-semibold text-marine-800">{o.titre}</div><p className="text-sm text-slate-500">{o.ville} · {CONTRATS[o.contrat!]} · créée le {dateCourte(o.cree_le)}</p></div>
+              <div><div className="font-semibold text-encre-800">{o.titre}</div><p className="text-sm text-slate-500">{o.ville} · {CONTRATS[o.contrat!]} · créée le {dateCourte(o.cree_le)}</p></div>
               <div className="flex items-center gap-2">
                 <Pastille couleur={STATUTS_OFFRE[o.statut!]?.couleur}>{STATUTS_OFFRE[o.statut!]?.label}</Pastille>
                 {o.statut !== 'fermee' && <button className="btn-clair py-1.5" onClick={() => setEdition(o)}>Modifier</button>}
@@ -148,24 +148,24 @@ function ProfilsRecus() {
           <div key={p.envoi_id} className="carte p-5">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="font-bold text-lg text-marine-800">{p.nom}</h3>
+                <h3 className="font-bold text-lg text-encre-800">{p.nom}</h3>
                 <p className="text-sm text-slate-500">{p.titre ?? 'Candidat'}{p.experience_annees != null ? ` · ${p.experience_annees} an${p.experience_annees > 1 ? 's' : ''} d’expérience` : ''}</p>
                 <p className="text-xs text-slate-400 mt-0.5">Pour : {p.offre_titre} · reçu le {dateCourte(p.envoye_le)}</p>
               </div>
               <Pastille couleur={PAIEMENTS[p.statut_paiement]?.couleur}>{argent(Number(p.prix), p.devise)} · {PAIEMENTS[p.statut_paiement]?.label}</Pastille>
             </div>
-            {p.commentaire_admin && <p className="mt-3 rounded-xl bg-dore-100/60 p-3 text-sm text-marine-800"><b>L’avis d’Agence Elite :</b> {p.commentaire_admin}</p>}
+            {p.commentaire_admin && <p className="mt-3 rounded-xl bg-rouge-100/60 p-3 text-sm text-encre-800"><b>L’avis d’Agence Elite :</b> {p.commentaire_admin}</p>}
             {p.resume && <p className="mt-3 text-sm text-slate-700 line-clamp-4 texte-libre">{p.resume}</p>}
             {p.competences.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{p.competences.map((c) => <Pastille key={c}>{c}</Pastille>)}</div>}
             {p.tests.length > 0 && (
               <div className="mt-3 space-y-1">
-                {p.tests.map((t, i) => <div key={i} className="flex items-center justify-between text-sm"><span className="inline-flex items-center gap-1.5"><ClipboardCheck size={14} className="text-violet-600" />{t.titre}</span><b className={t.reussi ? 'text-emerald-600' : 'text-amber-600'}>{t.pourcentage} %</b></div>)}
+                {p.tests.map((t, i) => <div key={i} className="flex items-center justify-between text-sm"><span className="inline-flex items-center gap-1.5"><ClipboardCheck size={14} className="text-rouge-600" />{t.titre}</span><b className={t.reussi ? 'text-emerald-600' : 'text-amber-600'}>{t.pourcentage} %</b></div>)}
               </div>
             )}
             <div className="mt-4 flex flex-wrap gap-2 text-sm">
               <a href={`mailto:${p.email}`} className="btn-clair py-1.5"><Mail size={15} />E-mail</a>
               {p.telephone && <a href={`tel:${p.telephone}`} className="btn-clair py-1.5"><Phone size={15} />Appeler</a>}
-              {p.cv_chemin && <button onClick={() => telecharger(p.cv_chemin!)} className="btn-marine py-1.5"><Download size={15} />{p.cv_nom ? 'CV' : 'CV'}</button>}
+              {p.cv_chemin && <button onClick={() => telecharger(p.cv_chemin!)} className="btn-noir py-1.5"><Download size={15} />{p.cv_nom ? 'CV' : 'CV'}</button>}
               {!p.cv_chemin && <span className="inline-flex items-center gap-1 text-slate-400"><FileText size={15} />Pas de CV joint</span>}
             </div>
             <div className="mt-4 flex items-center gap-2">

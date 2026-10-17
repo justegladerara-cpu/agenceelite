@@ -91,7 +91,7 @@ function MonProfil() {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <div className="carte p-6 space-y-5">
-        <h2 className="text-lg font-bold text-marine-800">Mes informations</h2>
+        <h2 className="text-lg font-bold text-encre-800">Mes informations</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div><label className="etiquette">Prénom et nom</label><input className="champ" value={p.nom} onChange={(e) => setP({ ...p, nom: e.target.value })} /></div>
           <div><label className="etiquette">Téléphone / WhatsApp</label><input className="champ" value={p.telephone} onChange={(e) => setP({ ...p, telephone: e.target.value })} /></div>
@@ -99,7 +99,7 @@ function MonProfil() {
           <div><label className="etiquette">Ville</label><input className="champ" list="villes" value={p.ville} onChange={(e) => setP({ ...p, ville: e.target.value })} /><datalist id="villes">{VILLES[p.pays].map((v) => <option key={v} value={v} />)}</datalist></div>
         </div>
         <hr className="border-slate-100" />
-        <h2 className="text-lg font-bold text-marine-800">Mon profil professionnel</h2>
+        <h2 className="text-lg font-bold text-encre-800">Mon profil professionnel</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2"><label className="etiquette">Poste recherché</label><input className="champ" placeholder="Ex. : Assistante de direction" value={c.titre ?? ''} onChange={(e) => setC({ ...c, titre: e.target.value })} /></div>
           <div><label className="etiquette">Métier</label><select className="champ" value={c.metier ?? ''} onChange={(e) => setC({ ...c, metier: e.target.value })}><option value="">Choisir…</option>{METIERS.map((m) => <option key={m}>{m}</option>)}</select></div>
@@ -115,13 +115,13 @@ function MonProfil() {
 
       <div className="space-y-4">
         <div className="carte p-6">
-          <h2 className="text-lg font-bold text-marine-800 flex items-center gap-2"><FileText size={20} />Mon CV</h2>
+          <h2 className="text-lg font-bold text-encre-800 flex items-center gap-2"><FileText size={20} />Mon CV</h2>
           {c.cv_chemin ? (
             <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-emerald-50 p-3">
               <button onClick={voirCv} className="truncate text-sm font-semibold text-emerald-800 underline">{c.cv_nom ?? 'Mon CV'}</button>
             </div>
           ) : <p className="mt-2 text-sm text-amber-700">Pas encore de CV : ajoutez-le pour que les recruteurs vous voient.</p>}
-          <label className={`btn-marine mt-4 w-full cursor-pointer ${upload ? 'opacity-50 pointer-events-none' : ''}`}>
+          <label className={`btn-noir mt-4 w-full cursor-pointer ${upload ? 'opacity-50 pointer-events-none' : ''}`}>
             <Upload size={16} />{upload ? 'Envoi…' : c.cv_chemin ? 'Remplacer mon CV' : 'Ajouter mon CV'}
             <input type="file" className="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) envoyerCv(f); e.target.value = '' }} />
@@ -129,7 +129,7 @@ function MonProfil() {
           <p className="mt-2 text-xs text-slate-400">PDF ou Word, 5 Mo au plus.</p>
         </div>
         <div className="carte p-6">
-          <h2 className="font-bold text-marine-800 flex items-center gap-2"><ClipboardCheck size={18} className="text-violet-600" />Démarquez-vous</h2>
+          <h2 className="font-bold text-encre-800 flex items-center gap-2"><ClipboardCheck size={18} className="text-rouge-600" />Démarquez-vous</h2>
           <p className="mt-1 text-sm text-slate-600">Les candidats qui ont réussi des tests sont présentés en premier aux entreprises.</p>
           <Link to="/tests" className="btn-clair mt-3 w-full">Passer un test</Link>
         </div>
@@ -159,7 +159,7 @@ function MesCandidatures() {
         return (
           <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div className="min-w-0">
-              {c.offre ? <Link to={`/offres/${c.offre.id}`} className="font-semibold text-marine-800 hover:underline">{c.offre.titre}</Link> : <span className="font-semibold text-slate-400">Offre retirée</span>}
+              {c.offre ? <Link to={`/offres/${c.offre.id}`} className="font-semibold text-encre-800 hover:underline">{c.offre.titre}</Link> : <span className="font-semibold text-slate-400">Offre retirée</span>}
               <p className="text-sm text-slate-500">{c.offre?.ville} · envoyée le {dateCourte(c.cree_le)}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ function MesTests() {
     <div className="carte divide-y divide-slate-100">
       {liste.map((r) => (
         <div key={r.id} className="flex items-center justify-between gap-3 p-4">
-          <div><div className="font-semibold text-marine-800">{r.test?.titre}</div><p className="text-sm text-slate-500">Passé le {dateCourte(r.termine_le)}</p></div>
+          <div><div className="font-semibold text-encre-800">{r.test?.titre}</div><p className="text-sm text-slate-500">Passé le {dateCourte(r.termine_le)}</p></div>
           <Pastille couleur={r.reussi ? 'emerald' : 'amber'}>{r.pourcentage} % · {r.reussi ? 'Réussi' : 'Non réussi'}</Pastille>
         </div>
       ))}

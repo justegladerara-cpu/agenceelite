@@ -61,7 +61,7 @@ export function FournisseurApp({ children }: { children: ReactNode }) {
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div key={t.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
-              className={`pointer-events-auto rounded-xl px-4 py-3 text-sm font-medium shadow-lg md:max-w-sm ${t.type === 'ok' ? 'bg-marine-800 text-white' : 'bg-bordeaux-600 text-white'}`}>
+              className={`pointer-events-auto rounded-xl px-4 py-3 text-sm font-medium shadow-lg md:max-w-sm ${t.type === 'ok' ? 'bg-encre-800 text-white' : 'bg-rouge-600 text-white'}`}>
               {t.texte}
             </motion.div>
           ))}

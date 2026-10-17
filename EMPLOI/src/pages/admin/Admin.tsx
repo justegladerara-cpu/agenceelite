@@ -86,14 +86,14 @@ function TableauDeBord({ aller }: { aller: (o: Onglet) => void }) {
     <div className="space-y-6">
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
         {tuiles.map((t) => (
-          <button key={t.l} onClick={() => aller(t.o)} className={`carte p-5 text-left hover:border-dore-500 ${t.alerte ? 'ring-2 ring-amber-300' : ''}`}>
-            <div className="text-3xl font-extrabold text-marine-800"><Compteur valeur={t.v} /></div>
+          <button key={t.l} onClick={() => aller(t.o)} className={`carte p-5 text-left hover:border-rouge-400 ${t.alerte ? 'ring-2 ring-amber-300' : ''}`}>
+            <div className="text-3xl font-extrabold text-encre-800"><Compteur valeur={t.v} /></div>
             <div className="text-sm text-slate-500 mt-1">{t.l}</div>
           </button>
         ))}
       </div>
       <div className="carte p-6">
-        <h2 className="font-bold text-marine-800 flex items-center gap-2"><Wallet size={18} />Revenus des CV qualifiés</h2>
+        <h2 className="font-bold text-encre-800 flex items-center gap-2"><Wallet size={18} />Revenus des CV qualifiés</h2>
         {revenus.length === 0 ? <p className="mt-2 text-sm text-slate-500">Aucun CV envoyé pour l’instant. Triez les candidatures, puis cliquez sur « Envoyer à l’entreprise ».</p> : (
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {revenus.map((r) => (
@@ -145,7 +145,7 @@ function Candidatures() {
           {filtrees.map((c) => (
             <div key={c.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
               <button onClick={() => setChoix(c)} className="text-left min-w-0">
-                <div className="font-semibold text-marine-800">{c.nom} <span className="font-normal text-slate-500">· {c.titre ?? 'sans titre'}</span></div>
+                <div className="font-semibold text-encre-800">{c.nom} <span className="font-normal text-slate-500">· {c.titre ?? 'sans titre'}</span></div>
                 <div className="text-sm text-slate-500">{c.offre_titre}{c.entreprise_nom ? ` (${c.entreprise_nom})` : ''} · {depuis(c.cree_le)}</div>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {c.tests.map((t, i) => <Pastille key={i} couleur={t.reussi ? 'emerald' : 'amber'}>{t.titre} {t.pourcentage} %</Pastille>)}
@@ -156,7 +156,7 @@ function Candidatures() {
                 <select className="champ py-1.5 w-auto" value={c.statut} onChange={(e) => changer(c, { statut: e.target.value })}>
                   {Object.entries(STATUTS_CANDIDATURE).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
-                {c.envoi_id ? <Pastille couleur="emerald">Envoyé</Pastille> : <button className="btn-dore py-1.5" onClick={() => setEnvoi(c)}><Send size={15} />Envoyer</button>}
+                {c.envoi_id ? <Pastille couleur="emerald">Envoyé</Pastille> : <button className="btn-primaire py-1.5" onClick={() => setEnvoi(c)}><Send size={15} />Envoyer</button>}
               </div>
             </div>
           ))}
@@ -171,7 +171,7 @@ function Candidatures() {
             <p><b>Lieu :</b> {choix.ville ?? '?'}{choix.pays ? `, ${PAYS[choix.pays as Pays]?.nom}` : ''} · <b>Expérience :</b> {choix.experience_annees ?? '?'} an(s)</p>
             {choix.competences.length > 0 && <div className="flex flex-wrap gap-1.5">{choix.competences.map((x) => <Pastille key={x}>{x}</Pastille>)}</div>}
             {choix.message && <p className="rounded-xl bg-slate-50 p-3 texte-libre">{choix.message}</p>}
-            {choix.cv_chemin && <button className="btn-marine" onClick={() => voirCv(choix.cv_chemin!, toast)}><Download size={15} />Ouvrir le CV</button>}
+            {choix.cv_chemin && <button className="btn-noir" onClick={() => voirCv(choix.cv_chemin!, toast)}><Download size={15} />Ouvrir le CV</button>}
             <div>
               <label className="etiquette">Note interne (jamais visible du candidat)</label>
               <textarea className="champ min-h-[90px]" defaultValue={choix.note_admin ?? ''} onBlur={(e) => { if (e.target.value !== (choix.note_admin ?? '')) changer(choix, { note_admin: e.target.value || null }) }} />
@@ -254,7 +254,7 @@ function OffresAdmin() {
           {liste.map((o) => (
             <div key={o.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
               <div className="min-w-0">
-                <div className="font-semibold text-marine-800">{o.titre} {o.a_la_une && <span className="text-dore-600">★</span>}</div>
+                <div className="font-semibold text-encre-800">{o.titre} {o.a_la_une && <span className="text-rouge-600">★</span>}</div>
                 <div className="text-sm text-slate-500">{o.entreprise?.nom ?? 'Agence Elite'} · {o.ville}, {PAYS[o.pays!]?.nom} · {CONTRATS[o.contrat!]} · {dateCourte(o.cree_le)}</div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -273,7 +273,7 @@ function OffresAdmin() {
           <>
             <div className="mb-4"><label className="etiquette">Entreprise</label>
               <select className="champ" value={edition.entreprise_id ?? ''} onChange={(e) => setEdition({ ...edition, entreprise_id: e.target.value || null })}>
-                <option value="">Agence Elite (recrutement pour un client)</option>
+                <option value="">Agence Elite (offre gérée par l’agence)</option>
                 {entreprises.map((e) => <option key={e.id} value={e.id}>{e.nom}</option>)}
               </select>
             </div>
@@ -302,11 +302,11 @@ function Entreprises() {
       {liste.map((e) => (
         <div key={e.id} className="carte p-5">
           <div className="flex items-start justify-between gap-2">
-            <div><h3 className="font-bold text-marine-800">{e.nom}</h3><p className="text-sm text-slate-500">{e.secteur ?? 'Secteur ?'} · {e.ville ?? '?'}{e.pays ? `, ${PAYS[e.pays].nom}` : ''}</p></div>
+            <div><h3 className="font-bold text-encre-800">{e.nom}</h3><p className="text-sm text-slate-500">{e.secteur ?? 'Secteur ?'} · {e.ville ?? '?'}{e.pays ? `, ${PAYS[e.pays].nom}` : ''}</p></div>
             <Pastille couleur={e.statut === 'validee' ? 'emerald' : e.statut === 'refusee' ? 'rose' : 'amber'}>{e.statut === 'validee' ? 'Validée' : e.statut === 'refusee' ? 'Refusée' : 'À valider'}</Pastille>
           </div>
           {e.description && <p className="mt-2 text-sm text-slate-600 line-clamp-3">{e.description}</p>}
-          {e.site_web && <a href={e.site_web} target="_blank" rel="noreferrer noopener" className="mt-1 block text-sm text-bordeaux-600 underline truncate">{e.site_web}</a>}
+          {e.site_web && <a href={e.site_web} target="_blank" rel="noreferrer noopener" className="mt-1 block text-sm text-rouge-600 underline truncate">{e.site_web}</a>}
           <div className="mt-4 flex gap-2">
             {e.statut !== 'validee' && <button className="btn-primaire py-1.5" onClick={() => statut(e.id, 'validee')}><CheckCircle2 size={15} />Valider</button>}
             {e.statut !== 'refusee' && <button className="btn-danger py-1.5" onClick={() => statut(e.id, 'refusee')}><XCircle size={15} />Refuser</button>}
@@ -337,11 +337,11 @@ function Ventes() {
       {liste.map((v) => (
         <div key={v.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="font-semibold text-marine-800">{v.candidature?.candidat?.profil?.nom ?? 'Candidat'} → {v.entreprise?.nom}</div>
+            <div className="font-semibold text-encre-800">{v.candidature?.candidat?.profil?.nom ?? 'Candidat'} → {v.entreprise?.nom}</div>
             <div className="text-sm text-slate-500">{v.candidature?.offre?.titre} · {dateCourte(v.envoye_le)} · décision : {DECISIONS[v.decision_entreprise]?.label}</div>
           </div>
           <div className="flex items-center gap-2">
-            <b className="text-marine-800">{argent(Number(v.prix), v.devise)}</b>
+            <b className="text-encre-800">{argent(Number(v.prix), v.devise)}</b>
             <select className="champ py-1.5 w-auto" value={v.statut_paiement} onChange={(e) => paiement(v.id, e.target.value)}>
               {Object.entries(PAIEMENTS).map(([k, p]) => <option key={k} value={k}>{p.label}</option>)}
             </select>
@@ -399,10 +399,10 @@ function TestsAdmin() {
       <div className="carte divide-y divide-slate-100">
         {tests.map((t) => (
           <div key={t.id} className="p-4 flex flex-wrap items-center justify-between gap-3">
-            <div><div className="font-semibold text-marine-800">{t.titre}</div><div className="text-sm text-slate-500">{t.categorie} · {t.duree_minutes} min · réussite à {t.seuil_reussite} %</div></div>
+            <div><div className="font-semibold text-encre-800">{t.titre}</div><div className="text-sm text-slate-500">{t.categorie} · {t.duree_minutes} min · réussite à {t.seuil_reussite} %</div></div>
             <div className="flex gap-2">
               <button className="btn-clair py-1.5" onClick={() => actif(t)}>{t.actif ? 'Désactiver' : 'Activer'}</button>
-              <button className="btn-marine py-1.5" onClick={() => ouvrir(t)}>Questions</button>
+              <button className="btn-noir py-1.5" onClick={() => ouvrir(t)}>Questions</button>
             </div>
           </div>
         ))}
@@ -411,13 +411,13 @@ function TestsAdmin() {
         <ol className="space-y-3">
           {questions.map((q, i) => (
             <li key={q.id} className="rounded-xl border border-slate-200 p-3">
-              <div className="flex justify-between gap-2"><b className="text-marine-800">{i + 1}. {q.enonce}</b><button className="text-xs text-rose-600" onClick={() => supprimer(q)}>Supprimer</button></div>
+              <div className="flex justify-between gap-2"><b className="text-encre-800">{i + 1}. {q.enonce}</b><button className="text-xs text-rose-600" onClick={() => supprimer(q)}>Supprimer</button></div>
               <ul className="mt-2 grid gap-1 sm:grid-cols-2 text-sm">{q.choix.map((c, k) => <li key={k} className={bonnes[q.id] === k ? 'font-semibold text-emerald-700' : 'text-slate-600'}>{bonnes[q.id] === k ? '✓ ' : '· '}{c}</li>)}</ul>
             </li>
           ))}
         </ol>
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 space-y-3">
-          <h3 className="font-bold text-marine-800">Ajouter une question</h3>
+          <h3 className="font-bold text-encre-800">Ajouter une question</h3>
           <input className="champ" placeholder="La question" value={nouvelle.enonce} onChange={(e) => setNouvelle({ ...nouvelle, enonce: e.target.value })} />
           {nouvelle.choix.map((c, k) => (
             <label key={k} className="flex items-center gap-2">

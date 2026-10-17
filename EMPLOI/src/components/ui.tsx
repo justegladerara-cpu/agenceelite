@@ -9,11 +9,7 @@ export const PASTILLE: Record<string, string> = {
   lime: 'bg-lime-100 text-lime-800 ring-lime-200', emerald: 'bg-emerald-100 text-emerald-700 ring-emerald-200',
   teal: 'bg-teal-100 text-teal-700 ring-teal-200', sky: 'bg-sky-100 text-sky-700 ring-sky-200',
   indigo: 'bg-indigo-100 text-indigo-700 ring-indigo-200', violet: 'bg-violet-100 text-violet-700 ring-violet-200',
-  slate: 'bg-slate-100 text-slate-700 ring-slate-200',
-}
-export const ICONE_FOND: Record<string, string> = {
-  rose: 'bg-rose-500', orange: 'bg-orange-500', amber: 'bg-amber-500', yellow: 'bg-yellow-500', lime: 'bg-lime-500',
-  emerald: 'bg-emerald-500', teal: 'bg-teal-500', sky: 'bg-sky-500', indigo: 'bg-indigo-500', violet: 'bg-violet-500', slate: 'bg-slate-500',
+  slate: 'bg-slate-100 text-slate-700 ring-slate-200', rouge: 'bg-rouge-50 text-rouge-700 ring-rouge-200',
 }
 
 export function Pastille({ couleur = 'slate', children }: { couleur?: string; children: ReactNode }) {
@@ -52,13 +48,13 @@ export function Fenetre({ ouverte, onFermer, titre, children, pied, large }: {
       {ouverte && (
         <motion.div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-6"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <div className="absolute inset-0 bg-marine-900/50 backdrop-blur-sm" onClick={onFermer} />
+          <div className="absolute inset-0 bg-encre-900/50 backdrop-blur-sm" onClick={onFermer} />
           <motion.div
             className={`relative w-full ${large ? 'md:max-w-4xl' : 'md:max-w-2xl'} max-h-[92vh] flex flex-col bg-white rounded-t-3xl md:rounded-3xl shadow-2xl`}
             initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
             transition={{ type: 'spring', damping: 26, stiffness: 300 }}>
             <div className="flex items-center justify-between px-5 md:px-6 py-4 border-b border-slate-100">
-              <h2 className="text-lg font-bold text-marine-800">{titre}</h2>
+              <h2 className="text-lg font-bold text-encre-800">{titre}</h2>
               <button onClick={onFermer} className="p-2 -mr-2 rounded-xl hover:bg-slate-100" aria-label="Fermer"><X size={20} /></button>
             </div>
             <div className="overflow-y-auto px-5 md:px-6 py-5">{children}</div>
@@ -76,9 +72,9 @@ export function EnTete({ titre, sousTitre, icone, couleur = 'indigo', actions }:
   return (
     <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between mb-6">
       <div className="flex items-center gap-4">
-        {icone && <div className={`h-12 w-12 shrink-0 rounded-2xl grid place-items-center text-white shadow-lg ${ICONE_FOND[couleur] ?? 'bg-marine-600'}`}>{icone}</div>}
+        {icone && <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl grid place-items-center bg-encre-900 text-white shadow-lg" data-couleur={couleur}>{icone}<span className="absolute inset-x-0 bottom-0 h-1 bg-rouge-500" /></div>}
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-marine-800 tracking-tight">{titre}</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-encre-900 tracking-tight">{titre}</h1>
           {sousTitre && <p className="text-slate-500 mt-0.5">{sousTitre}</p>}
         </div>
       </div>
@@ -90,7 +86,7 @@ export function EnTete({ titre, sousTitre, icone, couleur = 'indigo', actions }:
 export function Vide({ texte, action }: { texte: string; action?: ReactNode }) {
   return (
     <div className="carte p-10 text-center">
-      <div className="mx-auto mb-3 h-14 w-14 rounded-full bg-slate-100 grid place-items-center text-2xl">📋</div>
+      <img src={`${import.meta.env.BASE_URL}marque-ae.png`} alt="" aria-hidden="true" className="mx-auto mb-4 h-10 w-auto opacity-25" />
       <p className="text-slate-500 mb-4">{texte}</p>
       {action}
     </div>
@@ -100,7 +96,7 @@ export function Vide({ texte, action }: { texte: string; action?: ReactNode }) {
 export function Chargement({ texte = 'Chargement…' }: { texte?: string }) {
   return (
     <div className="flex items-center justify-center gap-3 py-16 text-slate-500">
-      <span className="h-5 w-5 rounded-full border-2 border-marine-500 border-t-transparent animate-spin" />{texte}
+      <span className="h-5 w-5 rounded-full border-2 border-rouge-600 border-t-transparent animate-spin" />{texte}
     </div>
   )
 }

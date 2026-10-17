@@ -41,22 +41,22 @@ export function Tests() {
   return (
     <div className="conteneur py-10">
       <div className="max-w-2xl">
-        <h1 className="text-3xl font-extrabold text-marine-800">Tests de compétences</h1>
+        <h1 className="text-3xl font-extrabold text-encre-800">Tests de compétences</h1>
         <p className="mt-2 text-slate-600">Montrez ce que vous savez faire. Vos résultats sont joints à votre profil et envoyés aux recruteurs avec votre CV. Chaque test se passe une fois par mois.</p>
       </div>
       {!tests ? <Chargement /> : parCategorie.map(([cat, liste]) => (
         <section key={cat} className="mt-10">
-          <h2 className="text-xl font-bold text-marine-800 mb-4">{cat}</h2>
+          <h2 className="text-xl font-bold text-encre-800 mb-4">{cat}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {liste.map((t) => {
               const r = resultats.find((x) => x.test_id === t.id)
               return (
-                <Link key={t.id} to={`/tests/${t.slug}`} className="carte p-5 hover:border-dore-500 transition flex flex-col">
+                <Link key={t.id} to={`/tests/${t.slug}`} className="carte p-5 hover:border-rouge-400 transition flex flex-col">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-100 text-violet-700"><ClipboardCheck size={20} /></span>
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-encre-900 text-white"><ClipboardCheck size={20} /></span>
                     {r && <Pastille couleur={r.reussi ? 'emerald' : 'amber'}>{r.pourcentage} %</Pastille>}
                   </div>
-                  <h3 className="mt-3 font-bold text-marine-800">{t.titre}</h3>
+                  <h3 className="mt-3 font-bold text-encre-800">{t.titre}</h3>
                   <p className="mt-1 text-sm text-slate-500 flex-1">{t.description}</p>
                   <p className="mt-3 text-xs text-slate-400 inline-flex items-center gap-1"><Clock size={13} />{t.duree_minutes} min · réussite à {t.seuil_reussite} %</p>
                 </Link>
@@ -140,9 +140,9 @@ export function PasserTest() {
   if (etat === 'fini' && note) return (
     <div className="conteneur py-16 max-w-lg text-center">
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-        {note.reussi ? <Award size={64} className="mx-auto text-dore-500" /> : <XCircle size={64} className="mx-auto text-slate-400" />}
+        {note.reussi ? <Award size={64} className="mx-auto text-rouge-400" /> : <XCircle size={64} className="mx-auto text-slate-400" />}
       </motion.div>
-      <h1 className="mt-4 text-3xl font-extrabold text-marine-800">{note.pourcentage} %</h1>
+      <h1 className="mt-4 text-3xl font-extrabold text-encre-800">{note.pourcentage} %</h1>
       <p className="mt-1 text-slate-600">{note.score} bonnes réponses sur {note.total}</p>
       <p className="mt-4 text-lg font-semibold">{note.reussi ? 'Bravo, test réussi ! Le résultat est ajouté à votre profil.' : `Pas cette fois. Il fallait ${test.seuil_reussite} %. Vous pourrez le repasser dans 30 jours.`}</p>
       <div className="mt-8 flex flex-wrap justify-center gap-2">
@@ -160,18 +160,18 @@ export function PasserTest() {
     return (
       <div className="conteneur py-8 max-w-2xl">
         <div className="flex items-center justify-between gap-4">
-          <h1 className="font-bold text-marine-800">{test.titre}</h1>
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono font-bold ${reste < 60 ? 'bg-rose-100 text-rose-700' : 'bg-marine-50 text-marine-800'}`}><Clock size={16} />{mm}:{ss}</span>
+          <h1 className="font-bold text-encre-800">{test.titre}</h1>
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono font-bold ${reste < 60 ? 'bg-rose-100 text-rose-700' : 'bg-encre-50 text-encre-800'}`}><Clock size={16} />{mm}:{ss}</span>
         </div>
-        <div className="mt-4 h-2 rounded-full bg-slate-200 overflow-hidden"><div className="h-full bg-bordeaux-600 transition-all" style={{ width: `${(repondu / questions.length) * 100}%` }} /></div>
+        <div className="mt-4 h-2 rounded-full bg-slate-200 overflow-hidden"><div className="h-full bg-rouge-600 transition-all" style={{ width: `${(repondu / questions.length) * 100}%` }} /></div>
         <AnimatePresence mode="wait">
           <motion.div key={q.id} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="carte mt-6 p-6">
             <p className="text-sm font-semibold text-slate-400">Question {index + 1} sur {questions.length}</p>
-            <h2 className="mt-2 text-xl font-bold text-marine-800 font-sans">{q.enonce}</h2>
+            <h2 className="mt-2 text-xl font-bold text-encre-800 font-sans">{q.enonce}</h2>
             <div className="mt-5 space-y-2">
               {ordres[q.id]?.map((i) => (
                 <button key={i} onClick={() => setReponses({ ...reponses, [q.id]: i })}
-                  className={`w-full text-left rounded-xl border-2 px-4 py-3 transition ${reponses[q.id] === i ? 'border-bordeaux-600 bg-bordeaux-50 font-semibold' : 'border-slate-200 hover:border-slate-300'}`}>
+                  className={`w-full text-left rounded-xl border-2 px-4 py-3 transition ${reponses[q.id] === i ? 'border-rouge-600 bg-rouge-50 font-semibold' : 'border-slate-200 hover:border-slate-300'}`}>
                   {q.choix[i]}
                 </button>
               ))}
@@ -181,13 +181,13 @@ export function PasserTest() {
         <div className="mt-5 flex justify-between gap-2">
           <button className="btn-clair" disabled={index === 0} onClick={() => setIndex(index - 1)}>Précédente</button>
           {index < questions.length - 1
-            ? <button className="btn-marine" onClick={() => setIndex(index + 1)}>Suivante</button>
+            ? <button className="btn-noir" onClick={() => setIndex(index + 1)}>Suivante</button>
             : <button className="btn-primaire" disabled={envoi} onClick={() => { if (repondu < questions.length && !confirm(`Vous avez répondu à ${repondu} questions sur ${questions.length}. Terminer quand même ?`)) return; terminer() }}>{envoi ? 'Correction…' : 'Terminer le test'}</button>}
         </div>
         <div className="mt-6 flex flex-wrap gap-1.5 justify-center">
           {questions.map((x, i) => (
             <button key={x.id} onClick={() => setIndex(i)} aria-label={`Question ${i + 1}`}
-              className={`h-8 w-8 rounded-lg text-xs font-bold ${i === index ? 'bg-marine-800 text-white' : reponses[x.id] !== undefined ? 'bg-emerald-100 text-emerald-700' : 'bg-white border border-slate-200 text-slate-500'}`}>{i + 1}</button>
+              className={`h-8 w-8 rounded-lg text-xs font-bold ${i === index ? 'bg-encre-800 text-white' : reponses[x.id] !== undefined ? 'bg-emerald-100 text-emerald-700' : 'bg-white border border-slate-200 text-slate-500'}`}>{i + 1}</button>
           ))}
         </div>
       </div>
@@ -197,9 +197,9 @@ export function PasserTest() {
   return (
     <div className="conteneur py-12 max-w-xl">
       <div className="carte p-8">
-        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-violet-100 text-violet-700"><ClipboardCheck /></span>
-        <p className="mt-4 text-sm font-semibold text-bordeaux-600">{test.categorie}</p>
-        <h1 className="text-2xl font-extrabold text-marine-800">{test.titre}</h1>
+        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-encre-900 text-white"><ClipboardCheck /></span>
+        <p className="mt-4 text-sm font-semibold text-rouge-600">{test.categorie}</p>
+        <h1 className="text-2xl font-extrabold text-encre-800">{test.titre}</h1>
         <p className="mt-2 text-slate-600">{test.description}</p>
         <ul className="mt-5 space-y-2 text-sm text-slate-700">
           <li className="flex gap-2"><Clock size={18} className="text-slate-400" />{test.duree_minutes} minutes. Le chrono continue même si vous fermez la page.</li>

@@ -35,7 +35,7 @@ export default function Offres() {
 
   return (
     <div className="conteneur py-10">
-      <h1 className="text-3xl font-extrabold text-marine-800">Offres d’emploi</h1>
+      <h1 className="text-3xl font-extrabold text-encre-800">Offres d’emploi</h1>
       <p className="text-slate-500 mt-1">{offres ? `${liste.length} offre${liste.length > 1 ? 's' : ''}` : 'Chargement…'}</p>
 
       <div className="carte mt-6 p-3 grid gap-2 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr]">
@@ -60,10 +60,10 @@ export default function Offres() {
           {METIERS.map((m) => <option key={m}>{m}</option>)}
         </select>
       </div>
-      {filtres && <button onClick={() => setParams({}, { replace: true })} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-bordeaux-600"><X size={15} />Effacer les filtres</button>}
+      {filtres && <button onClick={() => setParams({}, { replace: true })} className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-rouge-600"><X size={15} />Effacer les filtres</button>}
 
       <div className="mt-6">
-        {erreur && <p className="text-bordeaux-600">Les offres n’ont pas pu être chargées. Réessayez dans un instant.</p>}
+        {erreur && <p className="text-rouge-600">Les offres n’ont pas pu être chargées. Réessayez dans un instant.</p>}
         {!offres ? <Chargement /> : liste.length === 0 ? (
           <div className="carte p-10 text-center text-slate-500">Aucune offre ne correspond. Essayez avec moins de filtres.</div>
         ) : (

@@ -12,36 +12,36 @@ export function Recruter() {
   ]
   return (
     <>
-      <section className="bg-marine-800 text-white">
+      <section className="bg-encre-800 text-white">
         <div className="conteneur py-16 md:py-20 max-w-3xl">
-          <p className="text-dore-400 font-semibold">Entreprises</p>
+          <p className="text-rouge-300 font-semibold">Entreprises</p>
           <h1 className="mt-2 text-4xl font-extrabold leading-tight">Recrutez plus vite, avec des candidats déjà testés</h1>
-          <p className="mt-4 text-lg text-marine-100/85">Agence Elite publie vos offres, fait passer les tests et vous envoie seulement les CV qui correspondent. Vous payez uniquement les profils qualifiés que vous recevez.</p>
+          <p className="mt-4 text-lg text-encre-100/85">Agence Elite publie vos offres, fait passer les tests et vous envoie seulement les CV qui correspondent. Vous payez uniquement les profils qualifiés que vous recevez.</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link to={profil?.role === 'entreprise' ? '/espace-entreprise' : '/inscription?type=entreprise'} className="btn-dore">Déposer une offre</Link>
-            <a href="https://wa.me/242055222968" className="btn btn-clair">Nous écrire sur WhatsApp</a>
+            <Link to={profil?.role === 'entreprise' ? '/espace-entreprise' : '/inscription?type=entreprise'} className="btn-blanc">Déposer une offre</Link>
+            <a href="https://wa.me/242055222968" className="btn bg-[#25D366] text-encre-900 hover:brightness-95">Nous écrire sur WhatsApp</a>
           </div>
         </div>
       </section>
       <section className="conteneur py-14">
-        <h2 className="text-2xl font-extrabold text-marine-800">Comment ça marche</h2>
+        <h2 className="text-2xl font-extrabold text-encre-800">Comment ça marche</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {etapes.map(({ i: I, t, d }, n) => (
             <div key={t} className="carte p-5">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-bordeaux-50 text-bordeaux-600"><I size={20} /></span>
-              <h3 className="mt-3 font-bold text-marine-800">{n + 1}. {t}</h3>
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-rouge-50 text-rouge-600"><I size={20} /></span>
+              <h3 className="mt-3 font-bold text-encre-800">{n + 1}. {t}</h3>
               <p className="mt-1 text-sm text-slate-600">{d}</p>
             </div>
           ))}
         </div>
         <div className="mt-10 carte p-6 md:p-8 grid gap-6 md:grid-cols-2 items-center">
           <div>
-            <h2 className="text-2xl font-extrabold text-marine-800">Un tarif simple</h2>
+            <h2 className="text-2xl font-extrabold text-encre-800">Un tarif simple</h2>
             <p className="mt-2 text-slate-600">Publier une offre est gratuit. Vous payez chaque CV qualifié reçu, après tri et tests. Pour un recrutement complet (chasse, entretiens, intégration), demandez-nous un devis.</p>
           </div>
           <ul className="space-y-2 text-slate-700">
             {['Publication de l’offre offerte', 'Tests de compétences inclus', 'Paiement par CV qualifié reçu', 'Paiement Mobile Money, virement ou espèces'].map((x) => (
-              <li key={x} className="flex gap-2"><BadgeCheck className="text-emerald-600 shrink-0" size={20} />{x}</li>
+              <li key={x} className="flex gap-2"><BadgeCheck className="text-rouge-600 shrink-0" size={20} />{x}</li>
             ))}
           </ul>
         </div>
@@ -53,7 +53,7 @@ export function Recruter() {
 export function Confidentialite() {
   return (
     <div className="conteneur py-12 max-w-3xl">
-      <h1 className="text-3xl font-extrabold text-marine-800">Vos données personnelles</h1>
+      <h1 className="text-3xl font-extrabold text-encre-800">Vos données personnelles</h1>
       <div className="carte mt-6 p-6 md:p-8 space-y-4 text-slate-700 leading-relaxed">
         <p><b>Qui garde vos données ?</b> Agence Elite, Pointe-Noire (Congo). Contact : contact@agence-elite.fr.</p>
         <p><b>Ce que nous gardons :</b> votre nom, vos coordonnées, votre profil, votre CV, vos candidatures et vos résultats de tests. Pour les entreprises : les informations de l’entreprise et de la personne de contact.</p>
@@ -70,7 +70,7 @@ export function Confidentialite() {
 export function Introuvable() {
   return (
     <div className="conteneur py-20 text-center">
-      <h1 className="text-3xl font-extrabold text-marine-800">Page introuvable</h1>
+      <h1 className="text-3xl font-extrabold text-encre-800">Page introuvable</h1>
       <p className="mt-2 text-slate-600">Cette adresse n’existe pas ou plus.</p>
       <Link to="/offres" className="btn-primaire mt-6">Voir les offres</Link>
     </div>

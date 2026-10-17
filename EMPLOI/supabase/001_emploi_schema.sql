@@ -389,7 +389,7 @@ language sql stable security definer set search_path = '' as $$
          o.contrat, o.teletravail, o.salaire_min, o.salaire_max, o.devise,
          o.a_la_une, o.publiee_le, o.expire_le,
          case when o.confidentielle then null
-              when o.entreprise_id is null then 'Agence Elite (pour un client)'
+              when o.entreprise_id is null then 'Agence Elite'
               else e.nom end,
          case when o.confidentielle then null else e.secteur end,
          coalesce((select jsonb_agg(jsonb_build_object('id', t.id, 'slug', t.slug, 'titre', t.titre) order by t.ordre)
