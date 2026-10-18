@@ -1,0 +1,33 @@
+# Vérifie la plateforme Elite Emploi à chaque modification : construction du site et contrôle de la base (sécurité et parcours).
+name: Elite Emploi - vérification
+
+on:
+  pull_request:
+    paths: ['EMPLOI/**', '.github/workflows/emploi-verification.yml']
+  push:
+    branches: [main]
+    paths: ['EMPLOI/**', '.github/workflows/emploi-verification.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: EMPLOI
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: EMPLOI/package-lock.json
+      - run: npm ci
+      - name: Les tests SQL sont à jour
+        run: python3 scripts/generer-tests-sql.py && git diff --exit-code supabase/002_emploi_tests.sql supabase/tests-melanges.json
+      - name: Base de données (sécurité et parcours)
+        run: npm run verifier-sql
+      - name: Construction du site
+        run: npm run build

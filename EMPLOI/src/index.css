@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { min-height: 100%; }
+body { @apply bg-ivoire text-slate-800 antialiased; }
+::selection { @apply bg-rouge-100 text-encre-900; }
+:focus-visible { @apply outline-2 outline-offset-2 outline-rouge-600; }
+h1, h2, h3 { @apply font-titre; }
+input, select, textarea { @apply text-base; }
+
+@layer components {
+  .conteneur { @apply mx-auto w-full max-w-6xl px-4 md:px-6; }
+  .carte { @apply bg-white rounded-2xl shadow-carte border border-slate-100; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none; }
+  .btn-primaire { @apply btn bg-rouge-600 text-white hover:bg-rouge-700 shadow-sm shadow-rouge-600/20; }
+  .btn-noir { @apply btn bg-encre-800 text-white hover:bg-encre-900 shadow-sm; }
+  .btn-blanc { @apply btn bg-white text-encre-900 hover:bg-rouge-50 shadow-sm; }
+  .btn-clair { @apply btn bg-white text-slate-700 border border-slate-200 hover:bg-slate-50; }
+  .btn-danger { @apply btn bg-rose-50 text-rose-700 hover:bg-rose-100; }
+  .champ { @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 outline-none transition focus:border-encre-500 focus:ring-4 focus:ring-encre-100; }
+  .etiquette { @apply block text-sm font-semibold text-slate-700 mb-1.5; }
+  .onglet { @apply whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold transition; }
+  .onglet-actif { @apply bg-encre-800 text-white; }
+  .onglet-inactif { @apply text-slate-600 hover:bg-white; }
+}
+
+.texte-libre { white-space: pre-line; }
+
+/* Logo Agence Elite en filigrane, fixe derrière tout le contenu. */
+.filigrane {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: url('/logo-agence-elite.png') center 55% / min(88vw, 1100px) no-repeat;
+  opacity: .05;
+}
+/* Trait rouge sous les titres de section, repris de la barre du logo. */
+.trait::after { content: ''; display: block; width: 3rem; height: 4px; margin-top: .6rem; border-radius: 2px; background: #fb0000; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+
+/* Textes légaux rendus depuis le Markdown */
+.texte-legal { @apply text-slate-700 leading-relaxed text-[15px]; }
+.texte-legal h2 { @apply mt-8 first:mt-0 mb-3 text-xl font-extrabold text-encre-900 font-titre; }
+.texte-legal h3 { @apply mt-6 mb-2 text-base font-bold text-encre-800; }
+.texte-legal p { @apply my-3; }
+.texte-legal ul, .texte-legal ol { @apply my-3 pl-5 space-y-1; }
+.texte-legal ul { @apply list-disc; }
+.texte-legal ol { @apply list-decimal; }
+.texte-legal li::marker { @apply text-rouge-500; }
+.texte-legal a { @apply text-rouge-600 underline; }
+.texte-legal strong { @apply text-encre-900; }
+.texte-legal table { @apply my-4 w-full text-sm border-collapse block overflow-x-auto md:table; }
+.texte-legal th { @apply bg-slate-50 text-left font-semibold text-encre-800 px-3 py-2 border border-slate-200; }
+.texte-legal td { @apply px-3 py-2 border border-slate-200 align-top; }
+.texte-legal blockquote { @apply border-l-4 border-rouge-500 bg-slate-50 px-4 py-2 my-4 rounded-r-lg; }
+@media print { header, footer, .filigrane, aside { display: none !important; } .carte { box-shadow: none !important; border: 0 !important; } }

@@ -1,0 +1,1432 @@
+[
+ {
+  "slug": "excel-base",
+  "titre": "Excel : les bases",
+  "categorie": "Bureautique",
+  "description": "Formules simples, mise en forme et tri des données dans un tableur.",
+  "duree_minutes": 12,
+  "ordre": 1,
+  "questions": [
+   {
+    "q": "Quelle formule additionne les cellules A1 à A10 ?",
+    "c": [
+     "=A1+A10",
+     "=TOTAL(A1;A10)",
+     "=AJOUTER(A1:A10)",
+     "=SOMME(A1:A10)"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Que signifie le signe $ dans la référence $B$2 ?",
+    "c": [
+     "La cellule est protégée par un mot de passe",
+     "La cellule est masquée",
+     "La référence ne change pas quand on recopie la formule",
+     "La cellule contient un montant en dollars"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quelle formule calcule la moyenne des cellules C2 à C20 ?",
+    "c": [
+     "=MEDIANE(C2:C20)",
+     "=MOY(C2;C20)",
+     "=MOYENNE(C2:C20)",
+     "=SOMME(C2:C20)/2"
+    ],
+    "b": 2
+   },
+   {
+    "q": "La cellule A1 contient 200 et B1 contient 15 %. Quelle formule donne le montant de la remise ?",
+    "c": [
+     "=A1*B1",
+     "=A1-B1",
+     "=A1/B1",
+     "=A1+B1"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Quel outil permet d'afficher seulement les lignes d'une ville choisie ?",
+    "c": [
+     "Le zoom",
+     "La fusion de cellules",
+     "Le filtre automatique",
+     "La mise en page"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Que renvoie =SI(A1>=10;\"Admis\";\"Refusé\") si A1 vaut 8 ?",
+    "c": [
+     "Une erreur",
+     "Admis",
+     "Refusé",
+     "8"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quelle fonction compte le nombre de cellules non vides d'une plage ?",
+    "c": [
+     "=SOMME()",
+     "=NB.SI()",
+     "=MAX()",
+     "=NBVAL()"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Une cellule affiche ##### . Que faut-il faire le plus souvent ?",
+    "c": [
+     "Redémarrer l'ordinateur",
+     "Élargir la colonne",
+     "Changer la police en gras",
+     "Supprimer la formule"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Quel raccourci annule la dernière action ?",
+    "c": [
+     "Ctrl + S",
+     "Ctrl + P",
+     "Ctrl + Z",
+     "Ctrl + A"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Pour chercher le prix d'un article dans un tableau à partir de sa référence, on utilise plutôt :",
+    "c": [
+     "ARRONDI",
+     "AUJOURDHUI",
+     "RECHERCHEV (ou RECHERCHEX)",
+     "CONCATENER"
+    ],
+    "b": 2
+   }
+  ]
+ },
+ {
+  "slug": "word-courrier",
+  "titre": "Word et rédaction de courrier",
+  "categorie": "Bureautique",
+  "description": "Traitement de texte, mise en page et règles d'un courrier professionnel.",
+  "duree_minutes": 10,
+  "ordre": 2,
+  "questions": [
+   {
+    "q": "Où place-t-on habituellement l'objet dans une lettre professionnelle ?",
+    "c": [
+     "Après la signature",
+     "Dans le pied de page",
+     "Avant la formule d'appel (Madame, Monsieur)",
+     "En bas de page"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quelle fonction de Word crée automatiquement une table des matières ?",
+    "c": [
+     "Le zoom",
+     "Le correcteur",
+     "Le mode lecture",
+     "Les styles de titres"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Pour envoyer la même lettre à 200 clients avec leur nom, on utilise :",
+    "c": [
+     "Le publipostage",
+     "L'insertion d'une image",
+     "Le copier-coller 200 fois",
+     "Le suivi des modifications"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Quelle formule de politesse convient pour finir une lettre à un client ?",
+    "c": [
+     "À plus",
+     "Merci, c'est tout.",
+     "Bisous",
+     "Veuillez agréer, Madame, Monsieur, l'expression de mes salutations distinguées."
+    ],
+    "b": 3
+   },
+   {
+    "q": "Quel format garantit que le document s'affiche pareil chez le destinataire ?",
+    "c": [
+     "TXT",
+     "MP3",
+     "PDF",
+     "JPG"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Le suivi des modifications sert à :",
+    "c": [
+     "Voir et accepter les changements faits par d'autres",
+     "Imprimer en couleur",
+     "Changer la langue du clavier",
+     "Compter les mots"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Comment commencer une nouvelle page sans taper des lignes vides ?",
+    "c": [
+     "Mettre le texte en italique",
+     "Appuyer sur Échap",
+     "Insérer un saut de page",
+     "Réduire la marge"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quelle phrase est correctement écrite ?",
+    "c": [
+     "Je vous ai envoyé le devis.",
+     "Je vous et envoyé le devis.",
+     "Je vous est envoyé le devis.",
+     "Je vous ai envoyer le devis."
+    ],
+    "b": 0
+   },
+   {
+    "q": "Dans un e-mail professionnel, le champ « Cci » permet de :",
+    "c": [
+     "Changer la police",
+     "Programmer l'envoi",
+     "Mettre des destinataires en copie cachée",
+     "Ajouter une pièce jointe"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Où écrit-on le numéro de page pour qu'il apparaisse sur toutes les pages ?",
+    "c": [
+     "Dans un commentaire",
+     "Dans l'en-tête ou le pied de page",
+     "Dans le corps du texte",
+     "Dans le titre du fichier"
+    ],
+    "b": 1
+   }
+  ]
+ },
+ {
+  "slug": "francais-pro",
+  "titre": "Français professionnel",
+  "categorie": "Langues",
+  "description": "Orthographe, grammaire et vocabulaire utilisés au travail.",
+  "duree_minutes": 10,
+  "ordre": 3,
+  "questions": [
+   {
+    "q": "Choisissez la bonne orthographe :",
+    "c": [
+     "Les documents que j'ai reçu",
+     "Les documents que j'ai reçus",
+     "Les documents que j'ai reçue",
+     "Les documents que j'ai reçues"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Complétez : « Il faut que vous ___ ce rapport avant lundi. »",
+    "c": [
+     "finiriez",
+     "finirez",
+     "finissez",
+     "finissiez"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Quel mot est un synonyme de « prolonger » ?",
+    "c": [
+     "Ignorer",
+     "Étendre",
+     "Annuler",
+     "Raccourcir"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Complétez : « Les réunions ___ ont eu lieu hier étaient longues. »",
+    "c": [
+     "que",
+     "qui",
+     "dont",
+     "où"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Quelle phrase est correcte ?",
+    "c": [
+     "Bien qu'il pleuve, il est venu.",
+     "Malgré qu'il pleuve, il est venu.",
+     "Bien qu'il pleut, il est venu.",
+     "Malgré il pleut, il est venu."
+    ],
+    "b": 0
+   },
+   {
+    "q": "« Ci-joint la facture » signifie :",
+    "c": [
+     "La facture est en pièce jointe",
+     "La facture est payée",
+     "La facture est en retard",
+     "La facture est annulée"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Choisissez la bonne forme : « Nous nous sommes ___ à l'heure. »",
+    "c": [
+     "lever",
+     "levé",
+     "levés",
+     "levées"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quel est le contraire de « augmentation » ?",
+    "c": [
+     "Hausse",
+     "Croissance",
+     "Diminution",
+     "Progression"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Complétez : « Merci de me tenir ___ courant. »",
+    "c": [
+     "à le",
+     "du",
+     "au",
+     "en"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quelle phrase est la plus polie pour un client ?",
+    "c": [
+     "Pourriez-vous m'envoyer le document, s'il vous plaît ?",
+     "Envoyez-moi ça.",
+     "Je veux le document.",
+     "Faut m'envoyer le document."
+    ],
+    "b": 0
+   }
+  ]
+ },
+ {
+  "slug": "anglais-pro",
+  "titre": "Anglais professionnel",
+  "categorie": "Langues",
+  "description": "Compréhension et expressions courantes de l'anglais au bureau.",
+  "duree_minutes": 10,
+  "ordre": 4,
+  "questions": [
+   {
+    "q": "« I look forward to hearing from you » veut dire :",
+    "c": [
+     "Je vous entends mal",
+     "Je vous appellerai demain",
+     "Je regarde devant moi",
+     "J'attends votre réponse avec intérêt"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Complétez : « She ___ in this company since 2020. »",
+    "c": [
+     "work",
+     "is working",
+     "has worked",
+     "works"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quel mot signifie « réunion » ?",
+    "c": [
+     "Meeting",
+     "Billing",
+     "Shipping",
+     "Booking"
+    ],
+    "b": 0
+   },
+   {
+    "q": "« The deadline is Friday » signifie :",
+    "c": [
+     "Le directeur part vendredi",
+     "La ligne est coupée vendredi",
+     "La date limite est vendredi",
+     "Le contrat finit vendredi"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Choisissez la phrase correcte :",
+    "c": [
+     "He not like coffee.",
+     "He doesn't like coffee.",
+     "He don't like coffee.",
+     "He doesn't likes coffee."
+    ],
+    "b": 1
+   },
+   {
+    "q": "Au téléphone, « Could you hold on, please? » veut dire :",
+    "c": [
+     "Pouvez-vous parler plus fort ?",
+     "Pouvez-vous rappeler demain ?",
+     "Pouvez-vous patienter un instant ?",
+     "Pouvez-vous raccrocher ?"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quel est le passé de « to send » ?",
+    "c": [
+     "sended",
+     "sending",
+     "sent",
+     "sends"
+    ],
+    "b": 2
+   },
+   {
+    "q": "« Please find attached the invoice » signifie :",
+    "c": [
+     "Veuillez trouver ci-joint la facture",
+     "La facture est perdue",
+     "Veuillez chercher la facture",
+     "Veuillez payer la facture"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Complétez : « We have ___ customers than last year. »",
+    "c": [
+     "many more than",
+     "much",
+     "more",
+     "most"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quel mot désigne un « entretien d'embauche » ?",
+    "c": [
+     "Pay slip",
+     "Day off",
+     "Job interview",
+     "Job offer"
+    ],
+    "b": 2
+   }
+  ]
+ },
+ {
+  "slug": "calcul-pro",
+  "titre": "Calcul et raisonnement chiffré",
+  "categorie": "Aptitudes",
+  "description": "Pourcentages, règle de trois, prix et rendu de monnaie.",
+  "duree_minutes": 12,
+  "ordre": 5,
+  "questions": [
+   {
+    "q": "Un article coûte 20 000. Il est soldé à -25 %. Quel est le nouveau prix ?",
+    "c": [
+     "5 000",
+     "16 000",
+     "17 500",
+     "15 000"
+    ],
+    "b": 3
+   },
+   {
+    "q": "3 cartons pèsent 36 kg. Combien pèsent 5 cartons identiques ?",
+    "c": [
+     "45 kg",
+     "72 kg",
+     "50 kg",
+     "60 kg"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Un client paie 10 000 pour un achat de 7 350. Combien faut-il lui rendre ?",
+    "c": [
+     "2 650",
+     "2 750",
+     "3 650",
+     "3 350"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Un salaire passe de 200 000 à 220 000. Quelle est la hausse en pourcentage ?",
+    "c": [
+     "11 %",
+     "20 %",
+     "2 %",
+     "10 %"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Un prix hors taxe est de 100 000. La TVA est de 18,9 %. Quel est le prix TTC ?",
+    "c": [
+     "189 000",
+     "81 100",
+     "100 189",
+     "118 900"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Une équipe fait 120 pièces en 4 heures. Combien en 7 heures au même rythme ?",
+    "c": [
+     "240",
+     "180",
+     "210",
+     "200"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quelle est la moyenne de 12, 15 et 18 ?",
+    "c": [
+     "15",
+     "45",
+     "16",
+     "14"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Un stock de 500 bouteilles baisse de 40 par jour. Combien de jours avant d'atteindre 100 ?",
+    "c": [
+     "12",
+     "10",
+     "8",
+     "12,5"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Combien font 2,5 % de 80 000 ?",
+    "c": [
+     "20 000",
+     "200",
+     "2 000",
+     "3 200"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Un trajet de 150 km se fait à 60 km/h. Combien de temps dure-t-il ?",
+    "c": [
+     "2 h 30",
+     "3 h",
+     "2 h",
+     "2 h 50"
+    ],
+    "b": 0
+   }
+  ]
+ },
+ {
+  "slug": "logique",
+  "titre": "Logique et suites",
+  "categorie": "Aptitudes",
+  "description": "Suites de nombres, déductions et raisonnement.",
+  "duree_minutes": 12,
+  "ordre": 6,
+  "questions": [
+   {
+    "q": "Quel nombre continue la suite : 2, 4, 8, 16, … ?",
+    "c": [
+     "18",
+     "32",
+     "20",
+     "24"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Quel nombre continue la suite : 3, 6, 9, 12, … ?",
+    "c": [
+     "18",
+     "16",
+     "14",
+     "15"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Tous les techniciens portent un casque. Paul porte un casque. Que peut-on dire ?",
+    "c": [
+     "On ne peut pas savoir si Paul est technicien",
+     "Paul est le chef",
+     "Paul n'est pas technicien",
+     "Paul est forcément technicien"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Quel nombre continue la suite : 1, 1, 2, 3, 5, 8, … ?",
+    "c": [
+     "16",
+     "13",
+     "11",
+     "12"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Si lundi est le 1er du mois, quel jour est le 15 ?",
+    "c": [
+     "Mardi",
+     "Lundi",
+     "Mercredi",
+     "Dimanche"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Quel mot ne va pas avec les autres ?",
+    "c": [
+     "Tournevis",
+     "Clé à molette",
+     "Marteau",
+     "Classeur"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Awa est plus grande que Marc. Marc est plus grand que Léa. Qui est la plus petite ?",
+    "c": [
+     "Marc",
+     "On ne peut pas savoir",
+     "Awa",
+     "Léa"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Quel nombre continue la suite : 100, 90, 81, 73, … ?",
+    "c": [
+     "65",
+     "66",
+     "67",
+     "64"
+    ],
+    "b": 1
+   },
+   {
+    "q": "MAISON est à BÂTIMENT ce que CHIEN est à :",
+    "c": [
+     "Animal",
+     "Os",
+     "Niche",
+     "Chat"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Une horloge indique 15 h 00. Quelle heure sera-t-il dans 50 heures ?",
+    "c": [
+     "17 h 00",
+     "19 h 00",
+     "15 h 00",
+     "13 h 00"
+    ],
+    "b": 0
+   }
+  ]
+ },
+ {
+  "slug": "accueil-secretariat",
+  "titre": "Accueil et secrétariat",
+  "categorie": "Métiers",
+  "description": "Accueil des visiteurs, téléphone, agenda et classement.",
+  "duree_minutes": 10,
+  "ordre": 7,
+  "questions": [
+   {
+    "q": "Le téléphone sonne pendant que vous accueillez un visiteur. Que faites-vous ?",
+    "c": [
+     "Vous vous excusez auprès du visiteur, décrochez et proposez de rappeler",
+     "Vous laissez sonner",
+     "Vous demandez au visiteur de revenir plus tard",
+     "Vous décrochez et parlez longtemps"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Quelle est la bonne façon de répondre au téléphone ?",
+    "c": [
+     "« Oui ? »",
+     "« J'écoute. »",
+     "« Allô, c'est qui ? »",
+     "« Agence Elite, bonjour, Marie à l'appareil. Que puis-je pour vous ? »"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Deux rendez-vous sont prévus à la même heure pour votre directeur. Que faites-vous ?",
+    "c": [
+     "Rien, il verra bien",
+     "Vous recevez vous-même la deuxième personne",
+     "Vous annulez les deux",
+     "Vous le prévenez et proposez un nouveau créneau à l'une des personnes"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Un message téléphonique doit contenir au minimum :",
+    "c": [
+     "Le nom de votre collègue",
+     "Le nom, le numéro, l'objet, la date et l'heure de l'appel",
+     "Seulement le prénom",
+     "La météo du jour"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Un visiteur énervé élève la voix à l'accueil. Que faites-vous d'abord ?",
+    "c": [
+     "Vous restez calme, l'écoutez et cherchez une solution",
+     "Vous l'ignorez",
+     "Vous criez plus fort",
+     "Vous appelez immédiatement la police"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Le classement chronologique range les documents :",
+    "c": [
+     "Par couleur",
+     "Par date",
+     "Par taille",
+     "Par ordre alphabétique"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Un document confidentiel est oublié sur la photocopieuse. Que faites-vous ?",
+    "c": [
+     "Vous le jetez à la poubelle",
+     "Vous le lisez",
+     "Vous le laissez",
+     "Vous le rendez discrètement à son propriétaire"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Quel outil permet de partager l'agenda d'une équipe ?",
+    "c": [
+     "Une calculatrice",
+     "Un tableau noir",
+     "Un agenda partagé en ligne (Google Agenda, Outlook)",
+     "Un calendrier papier chez soi"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Un courrier recommandé avec accusé de réception sert à :",
+    "c": [
+     "Envoyer plus vite",
+     "Envoyer à l'étranger uniquement",
+     "Prouver l'envoi et la réception",
+     "Payer moins cher"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Un client demande une information que vous n'avez pas. Que répondez-vous ?",
+    "c": [
+     "« Je ne sais pas. »",
+     "« Ce n'est pas mon travail. »",
+     "Vous inventez une réponse",
+     "« Je me renseigne et je reviens vers vous rapidement. »"
+    ],
+    "b": 3
+   }
+  ]
+ },
+ {
+  "slug": "vente-relation-client",
+  "titre": "Vente et relation client",
+  "categorie": "Métiers",
+  "description": "Techniques de vente, écoute du client et gestion des objections.",
+  "duree_minutes": 10,
+  "ordre": 8,
+  "questions": [
+   {
+    "q": "Quelle est la première étape d'un entretien de vente ?",
+    "c": [
+     "Parler de la concurrence",
+     "Annoncer le prix",
+     "Découvrir les besoins du client",
+     "Faire signer le bon de commande"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Une question ouverte est une question :",
+    "c": [
+     "Qui laisse le client s'exprimer librement",
+     "À laquelle on répond par oui ou non",
+     "Posée à la fin de la vente",
+     "Posée à voix basse"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Le client dit « C'est trop cher ». Quelle réponse est la meilleure ?",
+    "c": [
+     "Baisser le prix tout de suite de 50 %",
+     "« Vous n'avez pas les moyens ? »",
+     "« Je comprends. Comparons ensemble ce que ce produit vous apporte. »",
+     "« Alors allez ailleurs. »"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Proposer un produit complémentaire (une housse avec un téléphone) s'appelle :",
+    "c": [
+     "L'inventaire",
+     "La vente additionnelle",
+     "La prospection",
+     "Le service après-vente"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Un client mécontent revient avec un produit défectueux. Que faites-vous ?",
+    "c": [
+     "Vous lui dites que c'est sa faute",
+     "Vous refusez de le recevoir",
+     "Vous le faites attendre longtemps",
+     "Vous l'écoutez, vous vous excusez et proposez une solution (échange, réparation)"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Fidéliser un client signifie :",
+    "c": [
+     "Lui vendre le plus cher possible une fois",
+     "Ne plus lui parler",
+     "Le faire revenir et acheter à nouveau",
+     "Lui offrir tout gratuitement"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Que veut dire « prospecter » ?",
+    "c": [
+     "Chercher de nouveaux clients",
+     "Ranger le stock",
+     "Former un collègue",
+     "Faire la caisse"
+    ],
+    "b": 0
+   },
+   {
+    "q": "La reformulation consiste à :",
+    "c": [
+     "Parler plus vite",
+     "Changer de sujet",
+     "Réciter la fiche produit",
+     "Répéter avec vos mots ce que le client a dit pour vérifier"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Un objectif de 60 ventes par mois et 45 ventes réalisées : quel est le taux de réalisation ?",
+    "c": [
+     "60 %",
+     "80 %",
+     "75 %",
+     "45 %"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quel comportement donne une bonne image au client ?",
+    "c": [
+     "Manger au comptoir",
+     "Sourire, saluer et être disponible",
+     "Être au téléphone personnel devant lui",
+     "Discuter entre collègues sans le regarder"
+    ],
+    "b": 1
+   }
+  ]
+ },
+ {
+  "slug": "comptabilite-base",
+  "titre": "Comptabilité de base",
+  "categorie": "Métiers",
+  "description": "Factures, TVA, trésorerie et documents comptables courants.",
+  "duree_minutes": 12,
+  "ordre": 9,
+  "questions": [
+   {
+    "q": "Une facture d'achat est un document qui prouve :",
+    "c": [
+     "Un salaire versé",
+     "Un prêt bancaire",
+     "Un achat fait par l'entreprise",
+     "Une vente de l'entreprise"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Le bilan présente :",
+    "c": [
+     "La liste des employés",
+     "Le planning des congés",
+     "Ce que l'entreprise possède et ce qu'elle doit, à une date donnée",
+     "Uniquement les ventes du mois"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Le compte de résultat permet de connaître :",
+    "c": [
+     "Le stock de fournitures",
+     "L'adresse des fournisseurs",
+     "Le bénéfice ou la perte de l'année",
+     "Le nombre de clients"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Un avoir est :",
+    "c": [
+     "Un bon de livraison",
+     "Un relevé bancaire",
+     "Une facture qui annule ou réduit une facture précédente",
+     "Un bulletin de paie"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Le rapprochement bancaire consiste à :",
+    "c": [
+     "Payer les salaires",
+     "Comparer le relevé de la banque et la comptabilité de l'entreprise",
+     "Changer de banque",
+     "Demander un crédit"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Dans l'espace OHADA, quel référentiel comptable est utilisé ?",
+    "c": [
+     "Aucun",
+     "Le plan comptable belge",
+     "Le SYSCOHADA",
+     "Les normes américaines US GAAP"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Une vente de 500 000 HT avec une TVA de 18 % : combien de TVA collectée ?",
+    "c": [
+     "500 000",
+     "590 000",
+     "90 000",
+     "18 000"
+    ],
+    "b": 2
+   },
+   {
+    "q": "La trésorerie, c'est :",
+    "c": [
+     "Le chiffre d'affaires de l'année",
+     "L'argent disponible en caisse et en banque",
+     "La valeur des machines",
+     "Le montant des dettes"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Une écriture comptable respecte la règle :",
+    "c": [
+     "Total débit = total crédit",
+     "Débit seulement",
+     "Crédit seulement",
+     "Total débit > total crédit"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Combien de temps faut-il en général conserver les pièces comptables ?",
+    "c": [
+     "Aucune obligation",
+     "Au moins 10 ans",
+     "1 mois",
+     "6 mois"
+    ],
+    "b": 1
+   }
+  ]
+ },
+ {
+  "slug": "logistique-magasin",
+  "titre": "Logistique et magasin",
+  "categorie": "Métiers",
+  "description": "Réception, stockage, inventaire et préparation de commandes.",
+  "duree_minutes": 10,
+  "ordre": 10,
+  "questions": [
+   {
+    "q": "Que veut dire la méthode FIFO (premier entré, premier sorti) ?",
+    "c": [
+     "On sort d'abord les produits arrivés en premier",
+     "On sort les produits les plus chers",
+     "On ne sort rien",
+     "On vend d'abord les produits les plus récents"
+    ],
+    "b": 0
+   },
+   {
+    "q": "À la réception d'une livraison, que vérifiez-vous en premier ?",
+    "c": [
+     "La couleur du camion",
+     "Le prix de vente",
+     "Le nom du chauffeur",
+     "Que les quantités et l'état correspondent au bon de livraison"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Un carton arrive abîmé. Que faites-vous ?",
+    "c": [
+     "Vous l'acceptez sans rien dire",
+     "Vous le cachez",
+     "Vous le jetez",
+     "Vous notez des réserves précises sur le bon de livraison"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Un inventaire sert à :",
+    "c": [
+     "Recruter des magasiniers",
+     "Compter réellement le stock pour le comparer aux chiffres",
+     "Fixer les prix",
+     "Nettoyer l'entrepôt"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Où ranger les produits lourds dans un rayonnage ?",
+    "c": [
+     "En bas",
+     "N'importe où",
+     "Dans l'allée",
+     "En haut"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Le stock de sécurité est :",
+    "c": [
+     "Le stock gardé pour éviter une rupture",
+     "Le stock vendu",
+     "Le stock volé",
+     "Le stock à jeter"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Quel équipement est obligatoire pour conduire un chariot élévateur ?",
+    "c": [
+     "Une autorisation de conduite et une formation",
+     "Aucun",
+     "Un smartphone",
+     "Un permis bateau"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Un bon de préparation indique :",
+    "c": [
+     "Le salaire du préparateur",
+     "La météo",
+     "Le planning des congés",
+     "Les articles et quantités à préparer pour une commande"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Le stock passe de 240 à 180 unités. Combien d'unités sont sorties ?",
+    "c": [
+     "80",
+     "420",
+     "40",
+     "60"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Pourquoi étiqueter les emplacements de stockage ?",
+    "c": [
+     "Pour retrouver les produits vite et sans erreur",
+     "Ce n'est pas utile",
+     "Pour décorer",
+     "Pour augmenter les prix"
+    ],
+    "b": 0
+   }
+  ]
+ },
+ {
+  "slug": "securite-hse",
+  "titre": "Sécurité au travail (HSE)",
+  "categorie": "Métiers",
+  "description": "Équipements de protection, risques, consignes et premiers réflexes.",
+  "duree_minutes": 10,
+  "ordre": 11,
+  "questions": [
+   {
+    "q": "Que signifie EPI ?",
+    "c": [
+     "Examen de prévention intérieure",
+     "Équipement de protection individuelle",
+     "Équipe de premiers intervenants",
+     "Entreprise de production industrielle"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Vous voyez une fuite d'huile au sol dans un passage. Que faites-vous ?",
+    "c": [
+     "Vous attendez la fin de la journée",
+     "Vous signalez et balisez la zone, puis faites nettoyer",
+     "Vous mettez un carton dessus sans prévenir",
+     "Vous passez à côté"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Un « presque accident » doit être :",
+    "c": [
+     "Signalé, pour éviter qu'il devienne un vrai accident",
+     "Caché au chef",
+     "Oublié",
+     "Raconté seulement aux amis"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Quel extincteur ne faut-il PAS utiliser sur un feu électrique sous tension ?",
+    "c": [
+     "Eau pulvérisée sans additif adapté",
+     "Aucun, tous conviennent",
+     "Poudre",
+     "CO2"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Un permis de travail est demandé pour :",
+    "c": [
+     "Prendre sa pause",
+     "Utiliser un stylo",
+     "Les travaux à risque (hauteur, point chaud, espace confiné)",
+     "Entrer au bureau"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quelle est la bonne posture pour soulever une charge ?",
+    "c": [
+     "Bras tendus loin du corps",
+     "Dos courbé, jambes tendues",
+     "Dos droit, jambes fléchies, charge près du corps",
+     "En tournant le buste"
+    ],
+    "b": 2
+   },
+   {
+    "q": "À partir de quelle hauteur faut-il une protection contre les chutes, selon la règle la plus courante ?",
+    "c": [
+     "À partir de 20 mètres seulement",
+     "Dès qu'il y a un risque de chute, et toujours au-dessus de 2 mètres environ",
+     "Seulement la nuit",
+     "Jamais"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Vous entendez l'alarme d'évacuation. Que faites-vous ?",
+    "c": [
+     "Vous suivez les consignes et rejoignez le point de rassemblement",
+     "Vous allez chercher vos affaires au vestiaire",
+     "Vous finissez votre travail",
+     "Vous prenez l'ascenseur"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Une fiche de données de sécurité (FDS) informe sur :",
+    "c": [
+     "Le salaire des employés",
+     "Les horaires d'ouverture",
+     "Les dangers d'un produit chimique et comment s'en protéger",
+     "Le menu de la cantine"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Un collègue est électrisé et toujours en contact avec le câble. Premier réflexe ?",
+    "c": [
+     "Couper le courant avant de le toucher, puis alerter les secours",
+     "Le tirer par le bras",
+     "Attendre qu'il se dégage seul",
+     "Lui jeter de l'eau"
+    ],
+    "b": 0
+   }
+  ]
+ },
+ {
+  "slug": "informatique-base",
+  "titre": "Informatique et internet",
+  "categorie": "Bureautique",
+  "description": "Fichiers, e-mail, sécurité en ligne et outils numériques du bureau.",
+  "duree_minutes": 10,
+  "ordre": 12,
+  "questions": [
+   {
+    "q": "Vous recevez un e-mail qui demande votre mot de passe « pour vérifier votre compte ». Que faites-vous ?",
+    "c": [
+     "Vous cliquez sur le lien pour voir",
+     "Vous répondez avec votre mot de passe",
+     "Vous ne répondez pas et vous signalez l'e-mail : c'est une arnaque (hameçonnage)",
+     "Vous le transférez à tous vos collègues"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Quel mot de passe est le plus sûr ?",
+    "c": [
+     "Pointe-Noire!Bureau2026",
+     "votre date de naissance",
+     "123456",
+     "motdepasse"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Que veut dire « sauvegarder » un fichier ?",
+    "c": [
+     "L'enregistrer pour ne pas le perdre",
+     "Le renommer",
+     "L'imprimer",
+     "Le supprimer"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Un fichier .xlsx s'ouvre avec :",
+    "c": [
+     "Un navigateur de photos",
+     "Un tableur (Excel, LibreOffice Calc)",
+     "Une calculatrice",
+     "Un lecteur vidéo"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Le « cloud » (Google Drive, OneDrive) permet :",
+    "c": [
+     "De stocker des fichiers en ligne et d'y accéder partout",
+     "D'imprimer plus vite",
+     "De refroidir l'ordinateur",
+     "De supprimer les virus"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Que faut-il faire avant de quitter son poste quelques minutes ?",
+    "c": [
+     "Laisser ses mots de passe sur un papier",
+     "Rien",
+     "Éteindre l'écran seulement",
+     "Verrouiller la session"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Pour retrouver un fichier rapidement, il vaut mieux :",
+    "c": [
+     "Ranger les fichiers dans des dossiers bien nommés",
+     "Ne jamais nommer les fichiers",
+     "Supprimer les anciens fichiers",
+     "Tout mettre sur le bureau"
+    ],
+    "b": 0
+   },
+   {
+    "q": "L'adresse d'un site sécurisé commence par :",
+    "c": [
+     "www-",
+     "http://",
+     "ftp://",
+     "https://"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Une visioconférence se fait avec :",
+    "c": [
+     "Le Bloc-notes",
+     "Teams, Zoom ou Google Meet",
+     "Excel",
+     "Paint"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Une clé USB trouvée sur le parking doit être :",
+    "c": [
+     "Prêtée à un collègue",
+     "Branchée pour voir ce qu'elle contient",
+     "Remise au service informatique sans la brancher",
+     "Gardée pour soi"
+    ],
+    "b": 2
+   }
+  ]
+ },
+ {
+  "slug": "savoir-etre",
+  "titre": "Savoir-être professionnel",
+  "categorie": "Comportement",
+  "description": "Mises en situation : ponctualité, travail en équipe, gestion des conflits.",
+  "duree_minutes": 10,
+  "ordre": 13,
+  "questions": [
+   {
+    "q": "Vous allez être en retard à cause d'un embouteillage. Que faites-vous ?",
+    "c": [
+     "Vous ne venez pas",
+     "Rien, vous expliquerez en arrivant",
+     "Vous prévenez votre responsable dès que possible",
+     "Vous demandez à un collègue de mentir pour vous"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Vous avez fait une erreur qui touche un client. Quelle est la meilleure attitude ?",
+    "c": [
+     "La signaler tout de suite et proposer une correction",
+     "Attendre que quelqu'un la découvre",
+     "Accuser un collègue",
+     "La cacher"
+    ],
+    "b": 0
+   },
+   {
+    "q": "Un collègue n'est pas d'accord avec vous en réunion. Que faites-vous ?",
+    "c": [
+     "Vous ne lui parlez plus",
+     "Vous l'écoutez et argumentez calmement",
+     "Vous l'insultez",
+     "Vous quittez la réunion"
+    ],
+    "b": 1
+   },
+   {
+    "q": "Votre responsable vous donne une tâche que vous ne savez pas faire. Que faites-vous ?",
+    "c": [
+     "Vous la donnez à quelqu'un sans prévenir",
+     "Vous dites que c'est fait",
+     "Vous ne faites rien",
+     "Vous demandez des explications ou de l'aide"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Vous avez trois tâches urgentes en même temps. Que faites-vous ?",
+    "c": [
+     "Vous partez plus tôt",
+     "Vous faites la plus facile et oubliez les autres",
+     "Vous les classez par priorité et prévenez si un délai ne peut pas être tenu",
+     "Vous attendez qu'on vous relance"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Un client vous fait un compliment sur le travail d'un collègue. Que faites-vous ?",
+    "c": [
+     "Vous n'en parlez pas",
+     "Vous critiquez le collègue",
+     "Vous transmettez le compliment au collègue",
+     "Vous dites que c'est vous"
+    ],
+    "b": 2
+   },
+   {
+    "q": "Votre téléphone personnel sonne souvent pendant le travail. La bonne pratique :",
+    "c": [
+     "Répondre à chaque fois",
+     "Le confier au client",
+     "Le laisser sonner fort",
+     "Le mettre en silencieux et rappeler pendant la pause"
+    ],
+    "b": 3
+   },
+   {
+    "q": "Un nouveau collègue arrive dans l'équipe. Que faites-vous ?",
+    "c": [
+     "Vous attendez qu'il vienne vers vous",
+     "Vous l'ignorez",
+     "Vous lui laissez les tâches pénibles",
+     "Vous l'accueillez et l'aidez à trouver ses repères"
+    ],
+    "b": 3
+   },
+   {
+    "q": "On vous propose un cadeau de valeur pour favoriser un fournisseur. Que faites-vous ?",
+    "c": [
+     "Vous acceptez discrètement",
+     "Vous demandez plus",
+     "Vous refusez et en informez votre responsable",
+     "Vous acceptez et partagez avec l'équipe"
+    ],
+    "b": 2
+   },
+   {
+    "q": "À la fin d'un projet, votre responsable critique une partie de votre travail. Que faites-vous ?",
+    "c": [
+     "Vous rejetez la faute sur les autres",
+     "Vous vous énervez",
+     "Vous écoutez, posez des questions et tirez des leçons pour la suite",
+     "Vous démissionnez"
+    ],
+    "b": 2
+   }
+  ]
+ }
+]
