@@ -138,7 +138,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <Link to="/non-discrimination" className="hover:text-white">Non-discrimination</Link>
           <a href="https://www.agence-elite.fr/mentions-legales" className="hover:text-white">Mentions légales</a>
         </div>
-        <div className={`border-t border-white/10 py-4 text-center text-xs text-encre-100/60 ${barreBas ? 'pb-20 md:pb-4' : ''}`}>© {new Date().getFullYear()} Agence Elite · L’innovation au service de votre succès · Pointe-Noire, Congo</div>
+        <div className={`border-t border-white/10 py-4 text-center text-xs text-encre-100/60 ${barreBas ? 'pb-20 md:pb-4' : ''}`}>© {new Date().getFullYear()} Agence Elite, enseigne de GROUPE 7M SERVICES SARL · L’innovation au service de votre succès · Pointe-Noire, Congo</div>
       </footer>
       <RetourHaut bas={barreBas} />
       {barreBas && (
